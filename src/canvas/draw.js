@@ -360,15 +360,20 @@ class Draw {
 
   frozen(box) {
     const { ctx } = this;
-    const { x, y, width } = box;
+    const { x, y, width, height } = box;
     const sx = x + width - 1;
     ctx.save();
     ctx.beginPath();
+    // ctx.moveTo(npx(x), npx(y));
+    // ctx.lineTo(npx(x + width), npx(y));
+    // ctx.lineTo(npx(x + width), npx(y + height));
+    // ctx.lineTo(npx(x), npx(y + height));
+    // ctx.closePath();
     ctx.moveTo(npx(sx - 8), npx(y - 1));
     ctx.lineTo(npx(sx), npx(y - 1));
     ctx.lineTo(npx(sx), npx(y + 8));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 255, 0, .85)';
+    ctx.fillStyle = 'rgba(0, 0, 0, .5)';
     ctx.fill();
     ctx.restore();
   }
