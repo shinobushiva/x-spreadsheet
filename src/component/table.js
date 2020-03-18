@@ -3,6 +3,7 @@ import { getFontSizePxByPt } from '../core/font';
 import _cell from '../core/cell';
 import { formulam } from '../core/formula';
 import { formatm } from '../core/format';
+import ImageSelector from './image_selector';
 
 import {
   Draw, DrawBox, thinLineWidth, npx,
@@ -117,6 +118,18 @@ function renderAutofilter(viewRange) {
   }
 }
 
+function renderImages() {
+  const { draw, data } = this;
+  if (data.images) {
+    data.images.forEach((image) => {
+      draw.image(image);
+    });
+  }
+  if (this.imageSelector) {
+    draw.imageHandler(this.imageSelector);
+  }
+}
+
 function renderContent(viewRange, fw, fh, tx, ty) {
   const { draw, data } = this;
   draw.save();
@@ -161,9 +174,15 @@ function renderContent(viewRange, fw, fh, tx, ty) {
 
   // 3 render autofilter
   renderAutofilter.call(this, viewRange);
+  draw.restore();
 
+  // INFO: drawing images here
+  draw.save();
+  draw.translate(fw, fh).translate(tx, ty);
+  renderImages.call(this);
   draw.restore();
 }
+
 
 function renderSelectedHeaderCell(x, y, w, h) {
   const { draw } = this;
@@ -299,6 +318,7 @@ class Table {
     this.el = el;
     this.draw = new Draw(el, data.viewWidth(), data.viewHeight());
     this.data = data;
+    this.imageSelector = new ImageSelector(this, this.draw);
   }
 
   resetData(data) {

@@ -392,6 +392,143 @@ class Draw {
     dtextcb();
     ctx.restore();
   }
+
+  image(_image) {
+    const { ctx } = this;
+    const {
+      x, y, rotate, scale, image,
+    } = _image;
+    ctx.save();
+    ctx.scale(dpr() * scale, dpr() * scale);
+    ctx.translate(x / scale, y / scale);
+    // canvasを回転する
+    const TO_RADIANS = Math.PI / 180;
+    ctx.rotate(rotate * TO_RADIANS);
+    ctx.drawImage(
+      image,
+      -image.naturalWidth / 2,
+      -image.naturalHeight / 2,
+    );
+    ctx.restore();
+  }
+
+  imageHandler(imageSelector) {
+    if (!imageSelector.selectedImage) {
+      return;
+    }
+    const { ctx } = this;
+    ctx.save();
+    const { x, y, rotate, scale, image } = imageSelector.selectedImage.image;
+    const { naturalWidth, naturalHeight } = image;
+
+    ctx.scale(dpr(), dpr());
+
+    const dhx = naturalHeight / 2 * Math.cos(rotate * Math.PI / 180) * scale;
+    const dhy = naturalHeight / 2 * Math.sin(rotate * Math.PI / 180) * scale;
+    const dwx = naturalWidth / 2 * Math.cos(rotate * Math.PI / 180) * scale;
+    const dwy = naturalWidth / 2 * Math.sin(rotate * Math.PI / 180) * scale;
+    const lt = {
+      x: x + dhy - dwx,
+      y: y - dhx - dwy,
+    };
+    const rt = {
+      x: x + dhy + dwx,
+      y: y - dhx + dwy,
+    };
+    const rb = {
+      x: x - dhy + dwx,
+      y: y + dhx + dwy,
+    };
+    const lb = {
+      x: x - dhy - dwx,
+      y: y + dhx - dwy,
+    };
+
+    const radius = 4 * dpr();
+    const strokeColor = 'rgba(255, 0, 0, .65)';
+
+    if (imageSelector.debug) {
+      // ｘ’＝ｘcosθ-ysinθ
+      // ｙ’＝ｘsinθ+ycosθ
+      const { tx, ty } = imageSelector.transformPoint(
+        imageSelector.lastMousePosition.x,
+        imageSelector.lastMousePosition.y,
+        imageSelector.selectedImage.image,
+      );
+
+      ctx.beginPath();
+      ctx.arc(imageSelector.lastMousePosition.x, imageSelector.lastMousePosition.y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(0, 255, 0, .65)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(tx, ty, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(0, 0, 255, .65)';
+      ctx.stroke();
+
+      // DEBUG: border
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + naturalWidth, y);
+      ctx.lineTo(x + naturalWidth, y + naturalHeight);
+      ctx.lineTo(x, y + naturalHeight);
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(0, 255, 0, .65)';
+      ctx.stroke();
+    }
+
+    // center
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // rotate handle
+    ctx.beginPath();
+    ctx.arc(x + dhy * 1.2, y - dhx * 1.2, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + dhy * 1.2, y - dhx * 1.2);
+    ctx.stroke();
+
+    // lefttop
+    ctx.beginPath();
+    ctx.arc(lt.x, lt.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // righttop
+    ctx.beginPath();
+    ctx.arc(rt.x, rt.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // rightbottom
+    ctx.beginPath();
+    ctx.arc(lb.x, lb.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // leftbottom
+    ctx.beginPath();
+    ctx.arc(rb.x, rb.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // border
+    ctx.beginPath();
+    ctx.moveTo(lt.x, lt.y);
+    ctx.lineTo(rt.x, rt.y);
+    ctx.lineTo(rb.x, rb.y);
+    ctx.lineTo(lb.x, lb.y);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255, 0, 0, .65)';
+    ctx.stroke();
+    ctx.restore();
+
+  }
 }
 
 export default {};

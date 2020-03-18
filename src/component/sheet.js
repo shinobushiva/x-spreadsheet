@@ -123,6 +123,7 @@ function selectorMove(multiple, direction) {
 
 // private methods
 function overlayerMousemove(evt) {
+  overlayerMousemoveImage.call(this, evt);
   // console.log('x:', evt.offsetX, ', y:', evt.offsetY);
   if (evt.buttons !== 0) return;
   if (evt.target.className === `${cssPrefix}-resizer-hover`) return;
@@ -350,12 +351,43 @@ function toolbarChangePaintformatPaste() {
   }
 }
 
+function transformMousePos(evt) {
+  const { data } = this;
+  const { rows, cols } = data;
+  const fw = cols.indexWidth;
+  const fh = rows.height;
+  const { offsetX, offsetY } = evt;
+  const { x, y } = data.scroll;
+  const cx = offsetX - fw + x;
+  const cy = offsetY - fh + y;
+  return { cx, cy };
+}
+
+function overlayerMousedownImage(evt) {
+  const { table, data } = this;
+  const { cx, cy } = transformMousePos.call(this, evt);
+  table.imageSelector.mousedown(cx, cy, data.images);
+  table.render();
+}
+
+function overlayerMousemoveImage(evt) {
+  const { table } = this;
+  const { cx, cy } = transformMousePos.call(this, evt);
+
+  table.imageSelector.mousemove(cx, cy);
+  table.render();
+}
+
 function overlayerMousedown(evt) {
   // console.log(':::::overlayer.mousedown:', evt.detail, evt.button, evt.buttons, evt.shiftKey);
   // console.log('evt.target.className:', evt.target.className);
   const {
     selector, data, table, sortFilter,
   } = this;
+  overlayerMousedownImage.call(this, evt);
+  if (table.imageSelector.selectedImage) {
+    return;
+  }
   const { offsetX, offsetY } = evt;
   const isAutofillEl = evt.target.className === `${cssPrefix}-selector-corner`;
   const cellRect = data.getCellRectByXY(offsetX, offsetY);
@@ -562,6 +594,7 @@ function sheetInitEvents() {
     editor,
     contextMenu,
     data,
+    table,
     toolbar,
     modalValidation,
     sortFilter,
@@ -595,6 +628,10 @@ function sheetInitEvents() {
       const { offsetX, offsetY } = evt;
       if (offsetY <= 0) colResizer.hide();
       if (offsetX <= 0) rowResizer.hide();
+    })
+    .on('mouseup', (evt) => {
+      const { cx, cy } = transformMousePos.call(this, evt);
+      table.imageSelector.mouseup(cx, cy);
     });
 
   selector.inputChange = (v) => {
