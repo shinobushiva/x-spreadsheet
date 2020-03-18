@@ -12,7 +12,7 @@ export default class ImageSelector {
     this.rotHandleHold = false;
 
     // For debugging
-    this.debug = false;
+    this.debug = true;
   }
 
   transformPoint(cx, cy, targetImage) {
@@ -82,7 +82,7 @@ export default class ImageSelector {
   }
 
   hit(cx, cy, targetImage) {
-    const { x, y, image } = targetImage;
+    const { x, y, scale, image } = targetImage;
     const { naturalWidth, naturalHeight } = image;
 
     const { tx, ty } = this.transformPoint(cx, cy, targetImage);
@@ -94,7 +94,7 @@ export default class ImageSelector {
           y: y + (naturalHeight / 2) - (naturalHeight / 2) * 1.2,
         };
         const sqdist = ((rotHandle.x - tx) ** 2) + ((rotHandle.y - ty) ** 2);
-        if (sqdist <= (4 * dpr()) ** 2) {
+        if (sqdist <= (4 / scale * dpr()) ** 2) {
           this.rotHandleHold = true;
           return this.selectedImage;
         }
@@ -109,7 +109,7 @@ export default class ImageSelector {
       // eslint-disable-next-line no-restricted-syntax
       for (const h of scaleHandles) {
         const sqdist = ((h.x - tx) ** 2) + ((h.y - ty) ** 2);
-        if (sqdist <= (4 * dpr()) ** 2) {
+        if (sqdist <= (4 / scale * dpr()) ** 2) {
           this.scaleHandleHold = true;
           return this.selectedImage;
         }

@@ -632,6 +632,33 @@ function sheetInitEvents() {
     .on('mouseup', (evt) => {
       const { cx, cy } = transformMousePos.call(this, evt);
       table.imageSelector.mouseup(cx, cy);
+    })
+    .on('drop', (evt) => {
+      console.log('drop', evt);
+      evt.preventDefault();
+      if (evt.dataTransfer.items) {
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < evt.dataTransfer.items.length; i++) {
+          const item = evt.dataTransfer.items[i];
+          if (item.kind === 'file') {
+            const file = item.getAsFile();
+            const { cx, cy } = transformMousePos.call(this, evt);
+            this.trigger('file-dropped', file, cx, cy);
+          }
+        }
+      } else {
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < evt.dataTransfer.files.length; i++) {
+          const item = evt.dataTransfer.files[i];
+          const file = item.getAsFile();
+          const { cx, cy } = transformMousePos.call(this, evt);
+          this.trigger('file-dropped', file, cx, cy);
+        }
+      }
+    })
+    .on('dragover', (evt) => {
+      // console.log('dragover', evt);
+      evt.preventDefault();
     });
 
   selector.inputChange = (v) => {
