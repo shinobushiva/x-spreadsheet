@@ -12,7 +12,7 @@ export default class ImageSelector {
     this.rotHandleHold = false;
 
     // For debugging
-    this.debug = true;
+    this.debug = false;
   }
 
   transformPoint(cx, cy, targetImage) {
