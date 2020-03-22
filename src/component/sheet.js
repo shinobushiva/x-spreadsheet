@@ -497,8 +497,12 @@ function editorSetOffset() {
 
 function editorSet() {
   const { editor, data } = this;
+  const cell = data.getSelectedCell();
+  if ('editable' in cell && cell.editable === false) {
+    return;
+  }
   editorSetOffset.call(this);
-  editor.setCell(data.getSelectedCell(), data.getSelectedValidator());
+  editor.setCell(cell, data.getSelectedValidator());
   clearClipboard.call(this);
 }
 

@@ -57,7 +57,6 @@ function keydownEventHandler(evt) {
 
 function inputEventHandler(evt) {
   const v = evt.target.value;
-  // console.log(evt, 'v:', v);
   const { suggest, textlineEl, validator } = this;
   const { cell } = this;
   if (cell !== null) {
