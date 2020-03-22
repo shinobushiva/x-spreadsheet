@@ -65,7 +65,10 @@ class Rows {
   }
 
   getOrNew(ri) {
-    this._[ri] = this._[ri] || { cells: {} };
+    if (this._[ri] && this._[ri].cells) {
+      return this._[ri];
+    }
+    this._[ri] = { cells: {} };
     return this._[ri];
   }
 
