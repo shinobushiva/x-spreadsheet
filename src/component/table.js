@@ -100,6 +100,9 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
     if (frozen) {
       draw.frozen(dbox);
     }
+    if (cell.variable) {
+      draw.cornerTriangle(dbox, 'rgba(255,192,203,1)');
+    }
   });
 }
 
@@ -334,6 +337,7 @@ class Table {
     const fw = cols.indexWidth;
     // fixed height of header
     const fh = rows.height;
+
 
     this.draw.resize(data.viewWidth(), data.viewHeight());
     this.clear();

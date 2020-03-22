@@ -88,7 +88,7 @@ function selectorMove(multiple, direction) {
   const {
     selector, data,
   } = this;
-  const { rows, cols } = data;
+  const { rows, cols, merges } = data;
   let [ri, ci] = selector.indexes;
   const { eri, eci } = selector.range;
   if (multiple) {
@@ -97,14 +97,54 @@ function selectorMove(multiple, direction) {
   // console.log('selector.move:', ri, ci);
   if (direction === 'left') {
     if (ci > 0) ci -= 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'right') {
     if (eci !== ci) ci = eci;
     if (ci < cols.len - 1) ci += 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'up') {
     if (ri > 0) ri -= 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'down') {
     if (eri !== ri) ri = eri;
     if (ri < rows.len - 1) ri += 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'row-first') {
     ci = 0;
   } else if (direction === 'row-last') {
@@ -898,6 +938,19 @@ function sheetInitEvents() {
 
 export default class Sheet {
   constructor(targetEl, data) {
+    // eslint-disable-next-line no-undef
+    const resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.target === targetEl.el) {
+          if (this.toolbar) {
+            this.toolbar.moreResize.call(this.toolbar);
+            this.reload();
+          }
+        }
+      });
+    });
+    resizeObserver.observe(targetEl.el);
+
     this.eventMap = new Map();
     const { view, showToolbar, showContextmenu } = data.settings;
     this.el = h('div', `${cssPrefix}-sheet`);

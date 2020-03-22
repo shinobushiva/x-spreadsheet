@@ -136,6 +136,7 @@ class Draw {
     this.ctx = el.getContext('2d');
     this.resize(width, height);
     this.ctx.scale(dpr(), dpr());
+    this.dpr = dpr;
   }
 
   resize(width, height) {
@@ -358,24 +359,23 @@ class Draw {
     ctx.restore();
   }
 
-  frozen(box) {
+  cornerTriangle(box, color = 'rgba(0, 0, 0, .5)', size = 16) {
     const { ctx } = this;
-    const { x, y, width, height } = box;
+    const { x, y, width } = box;
     const sx = x + width - 1;
     ctx.save();
     ctx.beginPath();
-    // ctx.moveTo(npx(x), npx(y));
-    // ctx.lineTo(npx(x + width), npx(y));
-    // ctx.lineTo(npx(x + width), npx(y + height));
-    // ctx.lineTo(npx(x), npx(y + height));
-    // ctx.closePath();
-    ctx.moveTo(npx(sx - 8), npx(y - 1));
+    ctx.moveTo(npx(sx - size), npx(y - 1));
     ctx.lineTo(npx(sx), npx(y - 1));
-    ctx.lineTo(npx(sx), npx(y + 8));
+    ctx.lineTo(npx(sx), npx(y + size));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 0, 0, .5)';
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.restore();
+  }
+
+  frozen(box) {
+    this.cornerTriangle(box, 'rgba(0, 0, 0, .5)');
   }
 
   rect(box, dtextcb) {
