@@ -87,7 +87,7 @@ export default class Toolbar {
     this.widthFn = widthFn;
     this.isHide = isHide;
     const style = data.defaultStyle();
-    this.moreResize = moreResize;
+    this.moreResize = moreResize.bind(this);
     this.items = [
       [
         this.undoEl = new Undo(),

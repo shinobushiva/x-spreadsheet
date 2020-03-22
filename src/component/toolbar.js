@@ -86,7 +86,6 @@ function moreResize() {
     el, btns, moreEl, ddMore, btns2,
   } = this;
   const { moreBtns, contentEl } = ddMore;
-  console.log('moreResieze', this.widthFn());
   el.css('width', `${this.widthFn() - 60}px`);
   const elBox = el.box();
 

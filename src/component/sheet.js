@@ -161,6 +161,33 @@ function selectorMove(multiple, direction) {
   scrollbarMove.call(this);
 }
 
+function transformMousePos(evt) {
+  const { data } = this;
+  const { rows, cols } = data;
+  const fw = cols.indexWidth;
+  const fh = rows.height;
+  const { offsetX, offsetY } = evt;
+  const { x, y } = data.scroll;
+  const cx = offsetX - fw + x;
+  const cy = offsetY - fh + y;
+  return { cx, cy };
+}
+
+function overlayerMousedownImage(evt) {
+  const { table, data } = this;
+  const { cx, cy } = transformMousePos.call(this, evt);
+  table.imageSelector.mousedown(cx, cy, data.images);
+  table.render();
+}
+
+function overlayerMousemoveImage(evt) {
+  const { table } = this;
+  const { cx, cy } = transformMousePos.call(this, evt);
+
+  table.imageSelector.mousemove(cx, cy);
+  table.render();
+}
+
 // private methods
 function overlayerMousemove(evt) {
   overlayerMousemoveImage.call(this, evt);
@@ -389,33 +416,6 @@ function toolbarChangePaintformatPaste() {
     clearClipboard.call(this);
     toolbar.paintformatToggle();
   }
-}
-
-function transformMousePos(evt) {
-  const { data } = this;
-  const { rows, cols } = data;
-  const fw = cols.indexWidth;
-  const fh = rows.height;
-  const { offsetX, offsetY } = evt;
-  const { x, y } = data.scroll;
-  const cx = offsetX - fw + x;
-  const cy = offsetY - fh + y;
-  return { cx, cy };
-}
-
-function overlayerMousedownImage(evt) {
-  const { table, data } = this;
-  const { cx, cy } = transformMousePos.call(this, evt);
-  table.imageSelector.mousedown(cx, cy, data.images);
-  table.render();
-}
-
-function overlayerMousemoveImage(evt) {
-  const { table } = this;
-  const { cx, cy } = transformMousePos.call(this, evt);
-
-  table.imageSelector.mousemove(cx, cy);
-  table.render();
 }
 
 function overlayerMousedown(evt) {
@@ -943,7 +943,7 @@ export default class Sheet {
       entries.forEach((entry) => {
         if (entry.target === targetEl.el) {
           if (this.toolbar) {
-            this.toolbar.moreResize.call(this.toolbar);
+            this.toolbar.moreResize();
             this.reload();
           }
         }
