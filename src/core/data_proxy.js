@@ -110,7 +110,7 @@ const bottombarHeight = 41;
 // src: cellRange
 // dst: cellRange
 function canPaste(src, dst, error = () => {}) {
-  const { merges } = this;
+  // const { merges } = this;
   const cellRange = dst.clone();
   const [srn, scn] = src.size();
   const [drn, dcn] = dst.size();
@@ -120,10 +120,11 @@ function canPaste(src, dst, error = () => {}) {
   if (scn > dcn) {
     cellRange.eci = dst.sci + scn - 1;
   }
-  if (merges.intersects(cellRange)) {
-    error(t('error.pasteForMergedCell'));
-    return false;
-  }
+  // INFO: merged cells can be pasted as well
+  // if (merges.intersects(cellRange)) {
+  //   error(t('error.pasteForMergedCell'));
+  //   return false;
+  // }
   return true;
 }
 function copyPaste(srcCellRange, dstCellRange, what, autofill = false) {
