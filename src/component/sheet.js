@@ -498,7 +498,7 @@ function editorSetOffset() {
 function editorSet() {
   const { editor, data } = this;
   const cell = data.getSelectedCell();
-  if ('editable' in cell && cell.editable === false) {
+  if (cell && 'editable' in cell && cell.editable === false) {
     return;
   }
   editorSetOffset.call(this);
@@ -560,10 +560,14 @@ function insertDeleteRowColumn(type) {
   const { data } = this;
   if (type === 'insert-row') {
     data.insert('row');
+  } else if (type === 'insert-row-after') {
+    data.insert('row-after');
   } else if (type === 'delete-row') {
     data.delete('row');
   } else if (type === 'insert-column') {
     data.insert('column');
+  } else if (type === 'insert-column-after') {
+    data.insert('column-after');
   } else if (type === 'delete-column') {
     data.delete('column');
   } else if (type === 'delete-cell') {
@@ -793,12 +797,12 @@ function sheetInitEvents() {
 
   // for selector
   bind(window, 'keydown', (evt) => {
+    // console.log('keydown.evt: ', evt);
     if (!this.focusing) return;
     const keyCode = evt.keyCode || evt.which;
     const {
       key, ctrlKey, shiftKey, metaKey,
     } = evt;
-    // console.log('keydown.evt: ', keyCode);
     if (ctrlKey || metaKey) {
       // const { sIndexes, eIndexes } = selector;
       // let what = 'all';
