@@ -378,18 +378,20 @@ class Draw {
     const {
       x, y, rotate, scale, image,
     } = _image;
-    ctx.save();
-    ctx.scale(dpr() * scale, dpr() * scale);
-    ctx.translate(x / scale, y / scale);
-    // canvasを回転する
-    const TO_RADIANS = Math.PI / 180;
-    ctx.rotate(rotate * TO_RADIANS);
-    ctx.drawImage(
-      image,
-      -image.naturalWidth / 2,
-      -image.naturalHeight / 2,
-    );
-    ctx.restore();
+    if (image) {
+      ctx.save();
+      ctx.scale(dpr() * scale, dpr() * scale);
+      ctx.translate(x / scale, y / scale);
+      // canvasを回転する
+      const TO_RADIANS = Math.PI / 180;
+      ctx.rotate(rotate * TO_RADIANS);
+      ctx.drawImage(
+        image,
+        -image.naturalWidth / 2,
+        -image.naturalHeight / 2,
+      );
+      ctx.restore();
+    }
   }
 
   imageHandler(imageSelector) {
@@ -399,6 +401,9 @@ class Draw {
     const { ctx } = this;
     ctx.save();
     const { x, y, rotate, scale, image } = imageSelector.selectedImage.image;
+    if (!image) {
+      return;
+    }
     const { naturalWidth, naturalHeight } = image;
 
     ctx.scale(dpr(), dpr());
