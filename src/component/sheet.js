@@ -168,8 +168,9 @@ function transformMousePos(evt) {
   const fh = rows.height;
   const { offsetX, offsetY } = evt;
   const { x, y } = data.scroll;
-  const cx = offsetX - fw + x;
-  const cy = offsetY - fh + y;
+  const mag = data.magnification;
+  const cx = offsetX / mag - fw + x;
+  const cy = offsetY / mag - fh + y;
   return { cx, cy };
 }
 
@@ -354,7 +355,12 @@ function sheetReset() {
   const vRect = this.getRect();
   tableEl.attr(vRect);
   overlayerEl.offset(vRect);
-  overlayerCEl.offset(tOffset);
+  overlayerCEl.offset({
+    width: vRect.width,
+    height: vRect.height,
+    left: tOffset.left,
+    top: tOffset.top,
+  });
   el.css('width', `${vRect.width}px`);
   verticalScrollbarSet.call(this);
   horizontalScrollbarSet.call(this);
@@ -616,6 +622,9 @@ function toolbarChange(type, value) {
     } else {
       this.freeze(0, 0);
     }
+  } else if (type === 'magnification') {
+    data.magnification = value;
+    sheetReset.call(this);
   } else {
     data.setSelectedCellAttr(type, value);
     if (type === 'formula' && !data.selector.multiple()) {
@@ -1074,13 +1083,17 @@ export default class Sheet {
   }
 
   getTableOffset() {
+    // INFO:SCALE: This is to set left top corner of the table
+    const mag = this.data.magnification;
+
     const { rows, cols } = this.data;
     const { width, height } = this.getRect();
-    return {
-      width: width - cols.indexWidth,
-      height: height - rows.height,
-      left: cols.indexWidth,
-      top: rows.height,
+    const res = {
+      width: (width - cols.indexWidth) * mag,
+      height: (height - rows.height) * mag,
+      left: (cols.indexWidth) * mag,
+      top: (rows.height) * mag,
     };
+    return res;
   }
 }

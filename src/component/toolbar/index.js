@@ -13,6 +13,7 @@ import Paintformat from './paintformat';
 import TextColor from './text_color';
 import FillColor from './fill_color';
 import FontSize from './font_size';
+import Magnification from './magnification';
 import Font from './font';
 import Format from './format';
 import Formula from './formula';
@@ -96,6 +97,7 @@ export default class Toolbar {
         new Print(),
         this.paintformatEl = new Paintformat(),
         this.clearformatEl = new Clearformat(),
+        this.magnificationEl = new Magnification(),
       ],
       buildDivider(),
       [

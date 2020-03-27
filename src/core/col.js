@@ -25,6 +25,7 @@ class Cols {
   }
 
   getWidth(i) {
+
     if (this.isHide(i)) return 0;
     const col = this._[i];
     if (col && col.width) {

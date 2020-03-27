@@ -10,6 +10,7 @@ class Rows {
   }
 
   getHeight(ri) {
+
     if (this.isHide(ri)) return 0;
     const row = this.get(ri);
     if (row && row.height) {

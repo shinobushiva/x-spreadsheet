@@ -5,6 +5,7 @@ import tooltip from './tooltip';
 import DropdownFont from './dropdown_font';
 import DropdownFontSize from './dropdown_fontsize';
 import DropdownFormat from './dropdown_format';
+import DropdownMagnification from './dropdown_magnification';
 import DropdownFormula from './dropdown_formula';
 import DropdownColor from './dropdown_color';
 import DropdownAlign from './dropdown_align';
@@ -112,6 +113,7 @@ function moreResize() {
   }
 }
 
+// XXX: This may be not used
 export default class Toolbar {
   constructor(data, widthFn, isHide = false) {
     this.data = data;
@@ -123,6 +125,7 @@ export default class Toolbar {
     this.ddFont = new DropdownFont();
     this.ddFormula = new DropdownFormula();
     this.ddFontSize = new DropdownFontSize();
+    this.ddMagnification = new DropdownMagnification();
     this.ddTextColor = new DropdownColor('text-color', style.color);
     this.ddFillColor = new DropdownColor('fill-color', style.bgcolor);
     this.ddAlign = new DropdownAlign(['left', 'center', 'right'], style.align);
@@ -135,6 +138,7 @@ export default class Toolbar {
       // this.printEl = buildButtonWithIcon('Print (Ctrl+P)', 'print', () => this.change('print')),
       this.paintformatEl = buildButtonWithIcon(`${t('toolbar.paintformat')}`, 'paintformat', () => toggleChange.call(this, 'paintformat')),
       this.clearformatEl = buildButtonWithIcon(`${t('toolbar.clearformat')}`, 'clearformat', () => this.change('clearformat')),
+      buildButton(`${t('toolbar.magnification')}`).child(this.ddMagnification.el),
       buildDivider(),
       buildButton(`${t('toolbar.format')}`).child(this.ddFormat.el),
       buildDivider(),

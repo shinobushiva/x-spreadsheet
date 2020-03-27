@@ -135,6 +135,7 @@ class Draw {
     this.el = el;
     this.ctx = el.getContext('2d');
     this.resize(width, height);
+    // XXX: Maybe it is doing nothing
     this.ctx.scale(dpr(), dpr());
     this.dpr = dpr;
   }
@@ -326,39 +327,6 @@ class Draw {
     ctx.restore();
   }
 
-  dropdown(box) {
-    const { ctx } = this;
-    const {
-      x, y, width, height,
-    } = box;
-    const sx = x + width - 15;
-    const sy = y + height - 15;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(npx(sx), npx(sy));
-    ctx.lineTo(npx(sx + 8), npx(sy));
-    ctx.lineTo(npx(sx + 4), npx(sy + 6));
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 0, 0, .45)';
-    ctx.fill();
-    ctx.restore();
-  }
-
-  error(box) {
-    const { ctx } = this;
-    const { x, y, width } = box;
-    const sx = x + width - 1;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(npx(sx - 8), npx(y - 1));
-    ctx.lineTo(npx(sx), npx(y - 1));
-    ctx.lineTo(npx(sx), npx(y + 8));
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(255, 0, 0, .65)';
-    ctx.fill();
-    ctx.restore();
-  }
-
   cornerTriangle(box, color = 'rgba(0, 0, 0, .5)', size = 16) {
     const { ctx } = this;
     const { x, y, width } = box;
@@ -374,8 +342,20 @@ class Draw {
     ctx.restore();
   }
 
+  dropdown(box) {
+    this.cornerTriangle(box, 'rgba(0, 0, 0, .45)');
+  }
+
+  error(box) {
+    this.cornerTriangle(box, 'rgba(255, 0, 0, .65)');
+  }
+
   frozen(box) {
     this.cornerTriangle(box, 'rgba(0, 0, 0, .5)');
+  }
+
+  varialbe(box) {
+    this.cornerTriangle(box, 'rgba(255,192,203,1)');
   }
 
   rect(box, dtextcb) {
@@ -466,7 +446,6 @@ class Draw {
       ctx.strokeStyle = 'rgba(0, 0, 255, .65)';
       ctx.stroke();
 
-      // DEBUG: border
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x + naturalWidth, y);
@@ -527,7 +506,6 @@ class Draw {
     ctx.strokeStyle = 'rgba(255, 0, 0, .65)';
     ctx.stroke();
     ctx.restore();
-
   }
 }
 

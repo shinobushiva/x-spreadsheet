@@ -346,6 +346,7 @@ export default class DataProxy {
     this.exceptRowSet = new Set();
     this.sortedRowMap = new Map();
     this.unsortedRowMap = new Map();
+    this.magnification = 1.0;
   }
 
   addValidation(mode, ref, validator) {
@@ -585,11 +586,14 @@ export default class DataProxy {
   }
 
   xyInSelectedRect(x, y) {
+    // INFO:SCALE: For selected cell click inside
+    const mag = this.magnification;
+
     const {
       left, top, width, height,
     } = this.getSelectedRect();
-    const x1 = x - this.cols.indexWidth;
-    const y1 = y - this.rows.height;
+    const x1 = x - this.cols.indexWidth * mag;
+    const y1 = y - this.rows.height * mag;
     // console.log('x:', x, ',y:', y, 'left:', left, 'top:', top);
     return x1 > left && x1 < (left + width)
       && y1 > top && y1 < (top + height);
@@ -636,23 +640,29 @@ export default class DataProxy {
     if (fsh > 0 && fsh > top) {
       top0 = top;
     }
-    return {
-      l: left,
-      t: top,
-      left: left0,
-      top: top0,
-      height,
-      width,
-      scroll,
+    // INFO:SCALE: This is to scale the size of selection
+    const mag = this.magnification;
+    const res = {
+      l: left * mag,
+      t: top * mag,
+      left: left0 * mag,
+      top: top0 * mag,
+      height: height * mag,
+      width: width * mag,
+      scroll: scroll * mag,
     };
+    return res;
   }
 
   getCellRectByXY(x, y) {
+    // INFO:SCALE: This is for selecting cell
+    const mag = this.magnification;
+
     const {
       scroll, merges, rows, cols,
     } = this;
-    let { ri, top, height } = getCellRowByY.call(this, y, scroll.y);
-    let { ci, left, width } = getCellColByX.call(this, x, scroll.x);
+    let { ri, top, height } = getCellRowByY.call(this, y / mag, scroll.y);
+    let { ci, left, width } = getCellColByX.call(this, x / mag, scroll.x);
     if (ci === -1) {
       width = cols.totalWidth();
     }
@@ -996,9 +1006,15 @@ export default class DataProxy {
     return this.settings.view.width();
   }
 
+  // XXX: you need to fix this
   freezeViewRange() {
+    // INFO:SCALE: This maybe
+    const mag = this.magnification;
+
     const [ri, ci] = this.freeze;
-    return new CellRange(0, 0, ri - 1, ci - 1, this.freezeTotalWidth(), this.freezeTotalHeight());
+    return new CellRange(0, 0, ri - 1, ci - 1,
+      this.freezeTotalWidth() * mag,
+      this.freezeTotalHeight() * mag);
   }
 
   contentRange() {
@@ -1023,6 +1039,9 @@ export default class DataProxy {
   }
 
   viewRange() {
+    // INFO:SCALE: This maybe
+    const mag = this.magnification;
+
     const {
       scroll, rows, cols, freeze, exceptRowSet,
     } = this;
@@ -1034,13 +1053,13 @@ export default class DataProxy {
     let [eri, eci] = [rows.len, cols.len];
     for (let i = ri; i < rows.len; i += 1) {
       if (!exceptRowSet.has(i)) {
-        y += rows.getHeight(i);
+        y += rows.getHeight(i) * mag;
         eri = i;
       }
       if (y > this.viewHeight()) break;
     }
     for (let j = ci; j < cols.len; j += 1) {
-      x += cols.getWidth(j);
+      x += cols.getWidth(j) * mag;
       eci = j;
       if (x > this.viewWidth()) break;
     }
@@ -1077,6 +1096,9 @@ export default class DataProxy {
   }
 
   rowEach(min, max, cb) {
+    // INFO:SCALE: to show grid and row numbers
+    const mag = this.magnification;
+
     let y = 0;
     const { rows } = this;
     const frset = this.exceptRowSet;
@@ -1096,13 +1118,16 @@ export default class DataProxy {
         if (rowHeight > 0) {
           cb(i, y, rowHeight);
           y += rowHeight;
-          if (y > this.viewHeight()) break;
+          if (y > this.viewHeight() / mag) break;
         }
       }
     }
   }
 
   colEach(min, max, cb) {
+    // INFO:SCALE: to show grid and col numbers
+    const mag = this.magnification;
+
     let x = 0;
     const { cols } = this;
     for (let i = min; i <= max; i += 1) {
@@ -1110,7 +1135,7 @@ export default class DataProxy {
       if (colWidth > 0) {
         cb(i, x, colWidth);
         x += colWidth;
-        if (x > this.viewWidth()) break;
+        if (x > this.viewWidth() / mag) break;
       }
     }
   }

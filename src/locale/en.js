@@ -6,6 +6,7 @@ export default {
     paintformat: 'Paint format',
     clearformat: 'Clear format',
     format: 'Format',
+    magnification: 'Magnification',
     fontName: 'Font',
     fontSize: 'Font size',
     fontBold: 'Font bold',

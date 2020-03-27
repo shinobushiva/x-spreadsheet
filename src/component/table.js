@@ -101,7 +101,7 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
       draw.frozen(dbox);
     }
     if (cell.variable) {
-      draw.cornerTriangle(dbox, 'rgba(255,192,203,1)');
+      draw.varialbe(dbox);
     }
   });
 }
@@ -203,8 +203,12 @@ function renderSelectedHeaderCell(x, y, w, h) {
 // ty: moving distance on y-axis
 function renderFixedHeaders(type, viewRange, w, h, tx, ty) {
   const { draw, data } = this;
-  const sumHeight = viewRange.h; // rows.sumHeight(viewRange.sri, viewRange.eri + 1);
-  const sumWidth = viewRange.w; // cols.sumWidth(viewRange.sci, viewRange.eci + 1);
+
+  // INFO:SCALE: must be here
+  const mag = data.magnification;
+
+  const sumHeight = viewRange.h / mag; // rows.sumHeight(viewRange.sri, viewRange.eri + 1);
+  const sumWidth = viewRange.w / mag; // cols.sumWidth(viewRange.sci, viewRange.eci + 1);
   const nty = ty + h;
   const ntx = tx + w;
 
@@ -290,15 +294,18 @@ function renderContentGrid({
     draw.restore();
     return;
   }
+  // INFO:SCALE: must be here
+  const mag = data.magnification;
+
   // console.log('rowStart:', rowStart, ', rowLen:', rowLen);
   data.rowEach(sri, eri, (i, y, ch) => {
     // console.log('y:', y);
-    if (i !== sri) draw.line([0, y], [w, y]);
-    if (i === eri) draw.line([0, y + ch], [w, y + ch]);
+    if (i !== sri) draw.line([0, y], [w / mag, y]);
+    if (i === eri) draw.line([0, y + ch], [w / mag, y + ch]);
   });
   data.colEach(sci, eci, (i, x, cw) => {
-    if (i !== sci) draw.line([x, 0], [x, h]);
-    if (i === eci) draw.line([x + cw, 0], [x + cw, h]);
+    if (i !== sci) draw.line([x, 0], [x, h / mag]);
+    if (i === eci) draw.line([x + cw, 0], [x + cw, h / mag]);
   });
   draw.restore();
 }
@@ -329,6 +336,7 @@ class Table {
     this.render();
   }
 
+  // INFO: rendering here
   render() {
     // resize canvas
     const { data } = this;
@@ -338,12 +346,14 @@ class Table {
     // fixed height of header
     const fh = rows.height;
 
-
     this.draw.resize(data.viewWidth(), data.viewHeight());
     this.clear();
 
+    // INFO:SCALE: This will make cell drawing scaled.
+    const mag = data.magnification;
+    this.draw.ctx.scale(mag, mag);
+
     const viewRange = data.viewRange();
-    // renderAll.call(this, viewRange, data.scroll);
     const tx = data.freezeTotalWidth();
     const ty = data.freezeTotalHeight();
     const { x, y } = data.scroll;
