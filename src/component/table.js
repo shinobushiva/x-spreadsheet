@@ -121,15 +121,15 @@ function renderAutofilter(viewRange) {
   }
 }
 
-function renderImages() {
+function renderImages(fw, fh, tx, ty) {
   const { draw, data } = this;
   if (data.images) {
     data.images.forEach((image) => {
-      draw.image(image);
+      draw.image(image, fw, fh, tx, ty);
     });
   }
   if (this.imageSelector) {
-    draw.imageHandler(this.imageSelector);
+    draw.imageHandler(this.imageSelector, fw, fh, tx, ty);
   }
 }
 
@@ -181,8 +181,7 @@ function renderContent(viewRange, fw, fh, tx, ty) {
 
   // INFO: drawing images here
   draw.save();
-  draw.translate(fw, fh).translate(tx, ty);
-  renderImages.call(this);
+  renderImages.call(this, fw, fh, tx, ty);
   draw.restore();
 }
 

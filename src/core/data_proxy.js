@@ -101,6 +101,7 @@ const defaultSettings = {
       italic: false,
     },
   },
+  setDataHook: d => d,
 };
 
 const toolbarHeight = 41;
@@ -347,6 +348,8 @@ export default class DataProxy {
     this.sortedRowMap = new Map();
     this.unsortedRowMap = new Map();
     this.magnification = 1.0;
+
+    this.setDataHook = this.settings.setDataHook;
   }
 
   addValidation(mode, ref, validator) {
@@ -1161,7 +1164,8 @@ export default class DataProxy {
     this.change(this.getData());
   }
 
-  setData(d) {
+  setData(data) {
+    const d = this.setDataHook(data);
     Object.keys(d).forEach((property) => {
       if (property === 'merges' || property === 'rows'
         || property === 'cols' || property === 'validations') {

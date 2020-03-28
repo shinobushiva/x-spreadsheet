@@ -691,7 +691,6 @@ function sheetInitEvents() {
       table.imageSelector.mouseup(cx, cy);
     })
     .on('drop', (evt) => {
-      console.log('drop', evt);
       evt.preventDefault();
       if (evt.dataTransfer.items) {
         // eslint-disable-next-line no-plusplus
@@ -809,6 +808,10 @@ function sheetInitEvents() {
   bind(window, 'keydown', (evt) => {
     // console.log('keydown.evt: ', evt);
     if (!this.focusing) return;
+
+    if (table.imageSelector.keydown(evt)) {
+      return;
+    }
     const keyCode = evt.keyCode || evt.which;
     const {
       key, ctrlKey, shiftKey, metaKey,

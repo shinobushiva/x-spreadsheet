@@ -373,33 +373,41 @@ class Draw {
     ctx.restore();
   }
 
-  image(_image) {
+  image(_image, fw, fh, tx, ty) {
     const { ctx } = this;
     const {
       x, y, rotate, scale, image,
     } = _image;
-    if (image) {
-      ctx.save();
-      ctx.scale(dpr() * scale, dpr() * scale);
-      ctx.translate(x / scale, y / scale);
-      // canvasを回転する
-      const TO_RADIANS = Math.PI / 180;
-      ctx.rotate(rotate * TO_RADIANS);
-      ctx.drawImage(
-        image,
-        -image.naturalWidth / 2,
-        -image.naturalHeight / 2,
-      );
-      ctx.restore();
+    ctx.save();
+    this.translate(fw, fh).translate(tx, ty);
+    try {
+      if (image) {
+        ctx.scale(dpr() * scale, dpr() * scale);
+        ctx.translate(x / scale, y / scale);
+        // canvasを回転する
+        const TO_RADIANS = Math.PI / 180;
+        ctx.rotate(rotate * TO_RADIANS);
+        ctx.drawImage(
+          image,
+          -image.naturalWidth / 2,
+          -image.naturalHeight / 2,
+        );
+        ctx.restore();
+      }
+    } catch (error) {
+      console.log(error);
+      console.log(image, _image);
     }
+    ctx.restore();
   }
 
-  imageHandler(imageSelector) {
+  imageHandler(imageSelector, fw, fh, tx, ty) {
     if (!imageSelector.selectedImage) {
       return;
     }
     const { ctx } = this;
     ctx.save();
+    this.translate(fw, fh).translate(tx, ty);
     const { x, y, rotate, scale, image } = imageSelector.selectedImage.image;
     if (!image) {
       return;

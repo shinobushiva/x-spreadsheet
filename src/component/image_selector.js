@@ -76,6 +76,22 @@ export default class ImageSelector {
     }
   }
 
+  keydown(evt) {
+    if (!this.selectedImage) {
+      return false;
+    }
+    // const keyCode = evt.keyCode || evt.which;
+    const {
+      key, // ctrlKey, shiftKey, metaKey,
+    } = evt;
+    if (key === 'Delete' || key === 'Backspace') {
+      debugger;
+      evt.preventDefault();
+      return true;
+    }
+    return false;
+  }
+
   hit(cx, cy, targetImage) {
     const { x, y, scale, image } = targetImage;
     const { naturalWidth, naturalHeight } = image;
