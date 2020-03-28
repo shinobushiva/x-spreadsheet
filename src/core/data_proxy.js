@@ -598,8 +598,15 @@ export default class DataProxy {
     const x1 = x - this.cols.indexWidth * mag;
     const y1 = y - this.rows.height * mag;
     // console.log('x:', x, ',y:', y, 'left:', left, 'top:', top);
-    return x1 > left && x1 < (left + width)
-      && y1 > top && y1 < (top + height);
+    // console.log('width:', width, ',height:', height);
+    // console.log(
+    //   x1 >= left,
+    //   x1 <= (left + width),
+    //   y1 >= top,
+    //   y1 <= (top + height),
+    // )
+    return x1 >= left && x1 <= (left + width)
+      && y1 >= top && y1 <= (top + height);
   }
 
   getSelectedRect() {

@@ -80,10 +80,15 @@ class Cols {
 
   deleteColumn(sci, eci) {
     // eslint-disable-next-line no-plusplus
+    const cols = {};
     for (let i = sci; i <= eci; i++) {
       delete (this._[`${i}`]);
     }
-    this.len -= (eci - sci);
+    Object.keys(this._).forEach((key, idx) => {
+      cols[idx] = this._[key];
+    });
+    this.len = Object.keys(cols).length;
+    this._ = cols;
   }
 
   insertColumn(sci, n = 1) {
