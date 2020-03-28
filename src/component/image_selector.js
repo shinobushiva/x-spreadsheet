@@ -76,7 +76,7 @@ export default class ImageSelector {
     }
   }
 
-  keydown(evt) {
+  keydown(sheet, evt) {
     if (!this.selectedImage) {
       return false;
     }
@@ -85,7 +85,9 @@ export default class ImageSelector {
       key, // ctrlKey, shiftKey, metaKey,
     } = evt;
     if (key === 'Delete' || key === 'Backspace') {
-      debugger;
+      const idx = sheet.data.images.findIndex(img => img === this.selectedImage.image);
+      sheet.data.images.splice(idx, 1);
+      this.selectedImage = undefined;
       evt.preventDefault();
       return true;
     }

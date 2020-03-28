@@ -809,7 +809,8 @@ function sheetInitEvents() {
     // console.log('keydown.evt: ', evt);
     if (!this.focusing) return;
 
-    if (table.imageSelector.keydown(evt)) {
+    if (table.imageSelector.keydown(this, evt)) {
+      this.reload();
       return;
     }
     const keyCode = evt.keyCode || evt.which;
