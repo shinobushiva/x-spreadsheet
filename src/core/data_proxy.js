@@ -810,12 +810,14 @@ export default class DataProxy {
         rows.insert(eri + 1, n);
       } else if (type === 'column') {
         rows.insertColumn(sci, n);
+        cols.insertColumn(sci, n);
         si = sci;
-        cols.len += 1;
+        // cols.len += 1;
       } else if (type === 'column-after') {
         rows.insertColumn(eci + 1, n);
+        cols.insertColumn(eci + 1, n);
         si = sci;
-        cols.len += 1;
+        // cols.len += 1;
       }
       merges.shift(type, si, n, (ri, ci, rn, cn) => {
         const cell = rows.getCell(ri, ci);
@@ -844,7 +846,7 @@ export default class DataProxy {
         rows.deleteColumn(sci, eci);
         si = range.sci;
         size = csize;
-        cols.len -= 1;
+        cols.deleteColumn(sci, eci);
       }
       // console.log('type:', type, ', si:', si, ', size:', size);
       merges.shift(type, si, -size, (ri, ci, rn, cn) => {
@@ -940,7 +942,7 @@ export default class DataProxy {
   getCellStyleOrDefault(ri, ci) {
     const { styles, rows } = this;
     const cell = rows.getCell(ri, ci);
-    const cellStyle = (cell && cell.style !== undefined) ? styles[cell.style] : {};
+    const cellStyle = (cell && cell.style !== undefined) ? styles[cell.style] || {} : {};
     return helper.merge(this.defaultStyle(), cellStyle);
   }
 
