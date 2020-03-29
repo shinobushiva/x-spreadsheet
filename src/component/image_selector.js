@@ -96,6 +96,7 @@ export default class ImageSelector {
 
   hit(cx, cy, targetImage) {
     const { x, y, scale, image } = targetImage;
+    if (!image) return;
     const { naturalWidth, naturalHeight } = image;
 
     const { tx, ty } = this.transformPoint(cx, cy, targetImage);
