@@ -154,9 +154,108 @@ function cutPaste(srcCellRange, dstCellRange) {
   clipboard.clear();
 }
 
+// This will apply style to the srounding cells
+function setNeighboringCellBorders(ri, ci, range, cell, cstyle, del = false) {
+  const { styles, rows, cols } = this;
+  // FIXME: border style apply for merged neighboring cells
+  // eslint-disable-next-line no-unused-vars
+  const { sri, sci, eri, eci } = range;
+  const mr = cell.merge !== undefined ? cell.merge[0] : 0;
+  const mc = cell.merge !== undefined ? cell.merge[1] : 0;
+
+  if (ri > 0) {
+    // eslint-disable-next-line no-plusplus
+    for (let ic = 0; ic <= mc; ic++) {
+      const nCell = rows.getCellOrNew(ri - 1, ci + ic);
+      const nmc = nCell.merge !== undefined ? nCell.merge[1] : 0;
+      if (mc >= nmc) {
+        let nStyle = {};
+        if (nCell.style !== undefined) {
+          nStyle = helper.cloneDeep(styles[nCell.style]);
+        }
+        nStyle.border = nStyle.border || {};
+        if (del) {
+          delete nStyle.border.bottom;
+        } else {
+          nStyle.border.bottom = Object.assign(
+            [], cstyle.border.top || [],
+          );
+        }
+        nCell.style = this.addStyle(nStyle);
+      }
+    }
+  }
+  if (ri <= rows.len - 1) {
+    // eslint-disable-next-line no-plusplus
+    for (let ic = 0; ic <= mc; ic++) {
+      const nCell = rows.getCellOrNew(ri + 1, ci + ic);
+      const nmc = nCell.merge !== undefined ? nCell.merge[1] : 0;
+      if (mc >= nmc) {
+        let nStyle = {};
+        if (nCell.style !== undefined) {
+          nStyle = helper.cloneDeep(styles[nCell.style]);
+        }
+        nStyle.border = nStyle.border || {};
+        if (del) {
+          delete nStyle.border.top;
+        } else {
+          nStyle.border.top = Object.assign(
+            [], cstyle.border.bottom || [],
+          );
+        }
+        nCell.style = this.addStyle(nStyle);
+      }
+    }
+  }
+  if (ci > 0) {
+    // eslint-disable-next-line no-plusplus
+    for (let ir = 0; ir <= mr; ir++) {
+      const nCell = rows.getCellOrNew(ri + ir, ci - 1);
+      const nmr = nCell.merge !== undefined ? nCell.merge[0] : 0;
+      if (mr >= nmr) {
+        let nStyle = {};
+        if (nCell.style !== undefined) {
+          nStyle = helper.cloneDeep(styles[nCell.style]);
+        }
+        nStyle.border = nStyle.border || {};
+        if (del) {
+          delete nStyle.border.right;
+        } else {
+          nStyle.border.right = Object.assign(
+            [], cstyle.border.left || [],
+          );
+        }
+        nCell.style = this.addStyle(nStyle);
+      }
+    }
+  }
+  if (ri <= cols.len - 1) {
+    // eslint-disable-next-line no-plusplus
+    for (let ir = 0; ir <= mr; ir++) {
+      const nCell = rows.getCellOrNew(ri + ir, ci + 1);
+      const nmr = nCell.merge !== undefined ? nCell.merge[0] : 0;
+      if (mr >= nmr) {
+        let nStyle = {};
+        if (nCell.style !== undefined) {
+          nStyle = helper.cloneDeep(styles[nCell.style]);
+        }
+        nStyle.border = nStyle.border || {};
+        if (del) {
+          delete nStyle.border.left;
+        } else {
+          nStyle.border.left = Object.assign(
+            [], cstyle.border.right || [],
+          );
+        }
+        nCell.style = this.addStyle(nStyle);
+      }
+    }
+  }
+}
+
 // INFO: set border here
 // bss: { top, bottom, left, right }
-function setStyleBorder(ri, ci, bss) {
+function setStyleBorder(ri, ci, range, bss) {
   const { styles, rows } = this;
   const cell = rows.getCellOrNew(ri, ci);
   let cstyle = {};
@@ -166,6 +265,7 @@ function setStyleBorder(ri, ci, bss) {
   cstyle.border = cstyle.border || {};
   cstyle.border = Object.assign(cstyle.border, bss);
   cell.style = this.addStyle(cstyle);
+  setNeighboringCellBorders.call(this, ri, ci, range, cell, cstyle, false);
 }
 
 function setStyleBorders({ mode, style, color }) {
@@ -180,19 +280,17 @@ function setStyleBorders({ mode, style, color }) {
     }
   }
   if (mode === 'outside' && !multiple) {
-    setStyleBorder.call(this, sri, sci, {
+    setStyleBorder.call(this, sri, sci, { sri, sci, eri, eci }, {
       top: [style, color], bottom: [style, color], left: [style, color], right: [style, color],
     });
   } else if (mode === 'none') {
     selector.range.each((ri, ci) => {
       const cell = rows.getCell(ri, ci);
       if (cell && cell.style !== undefined) {
-        const ns = helper.cloneDeep(styles[cell.style]);
+        const ns = helper.cloneDeep(styles[cell.style] || {});
         delete ns.border;
-        // ['bottom', 'top', 'left', 'right'].forEach((prop) => {
-        //   if (ns[prop]) delete ns[prop];
-        // });
         cell.style = this.addStyle(ns);
+        setNeighboringCellBorders.call(this, ri, ci, { sri, sci, eri, eci }, cell, ns, true);
       }
     });
   } else if (mode === 'all' || mode === 'inside' || mode === 'outside'
@@ -245,7 +343,7 @@ function setStyleBorders({ mode, style, color }) {
           if (mcl || eci === ci) bss.right = [style, color];
         }
         if (Object.keys(bss).length > 0) {
-          setStyleBorder.call(this, ri, ci, bss);
+          setStyleBorder.call(this, ri, ci, { sri, sci, eri, eci }, bss);
         }
         ci += cn;
       }
@@ -253,22 +351,22 @@ function setStyleBorders({ mode, style, color }) {
   } else if (mode === 'top' || mode === 'bottom') {
     for (let ci = sci; ci <= eci; ci += 1) {
       if (mode === 'top') {
-        setStyleBorder.call(this, sri, ci, { top: [style, color] });
+        setStyleBorder.call(this, sri, ci, { sri, sci, eri, eci }, { top: [style, color] });
         ci += rows.getCellMerge(sri, ci)[1];
       }
       if (mode === 'bottom') {
-        setStyleBorder.call(this, eri, ci, { bottom: [style, color] });
+        setStyleBorder.call(this, eri, ci, { sri, sci, eri, eci }, { bottom: [style, color] });
         ci += rows.getCellMerge(eri, ci)[1];
       }
     }
   } else if (mode === 'left' || mode === 'right') {
     for (let ri = sri; ri <= eri; ri += 1) {
       if (mode === 'left') {
-        setStyleBorder.call(this, ri, sci, { left: [style, color] });
+        setStyleBorder.call(this, ri, sci, { sri, sci, eri, eci }, { left: [style, color] });
         ri += rows.getCellMerge(ri, sci)[0];
       }
       if (mode === 'right') {
-        setStyleBorder.call(this, ri, eci, { right: [style, color] });
+        setStyleBorder.call(this, ri, eci, { sri, sci, eri, eci }, { right: [style, color] });
         ri += rows.getCellMerge(ri, eci)[0];
       }
     }

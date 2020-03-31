@@ -34,10 +34,10 @@ class DrawBox {
   setBorders({
     top, bottom, left, right,
   }) {
-    if (top) this.borderTop = top;
-    if (right) this.borderRight = right;
-    if (bottom) this.borderBottom = bottom;
-    if (left) this.borderLeft = left;
+    if (top && top.length > 0) this.borderTop = top;
+    if (right && right.length > 0) this.borderRight = right;
+    if (bottom && bottom.length > 0) this.borderBottom = bottom;
+    if (left && left.length > 0) this.borderLeft = left;
   }
 
   innerWidth() {
