@@ -154,6 +154,7 @@ function cutPaste(srcCellRange, dstCellRange) {
   clipboard.clear();
 }
 
+// INFO: set border here
 // bss: { top, bottom, left, right }
 function setStyleBorder(ri, ci, bss) {
   const { styles, rows } = this;
@@ -162,7 +163,8 @@ function setStyleBorder(ri, ci, bss) {
   if (cell.style !== undefined) {
     cstyle = helper.cloneDeep(styles[cell.style]);
   }
-  Object.assign(cstyle, { border: bss });
+  cstyle.border = cstyle.border || {};
+  cstyle.border = Object.assign(cstyle.border, bss);
   cell.style = this.addStyle(cstyle);
 }
 

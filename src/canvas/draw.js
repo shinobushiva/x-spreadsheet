@@ -268,7 +268,7 @@ class Draw {
 
   border(style, color) {
     const { ctx } = this;
-    ctx.lineWidth = thinLineWidth;
+    ctx.lineWidth = thinLineWidth();
     ctx.strokeStyle = color;
     // console.log('style:', style);
     if (style === 'medium') {
@@ -301,30 +301,38 @@ class Draw {
 
   strokeBorders(box) {
     const { ctx } = this;
-    ctx.save();
-    ctx.beginPath();
     // border
     const {
       borderTop, borderRight, borderBottom, borderLeft,
     } = box;
     if (borderTop) {
+      ctx.save();
+      ctx.beginPath();
       this.border(...borderTop);
-      // console.log('box.topxys:', box.topxys());
       this.line(...box.topxys());
+      ctx.restore();
     }
     if (borderRight) {
+      ctx.save();
+      ctx.beginPath();
       this.border(...borderRight);
       this.line(...box.rightxys());
+      ctx.restore();
     }
     if (borderBottom) {
+      ctx.save();
+      ctx.beginPath();
       this.border(...borderBottom);
       this.line(...box.bottomxys());
+      ctx.restore();
     }
     if (borderLeft) {
+      ctx.save();
+      ctx.beginPath();
       this.border(...borderLeft);
       this.line(...box.leftxys());
+      ctx.restore();
     }
-    ctx.restore();
   }
 
   cornerTriangle(box, color = 'rgba(0, 0, 0, .5)', size = 16) {
