@@ -183,6 +183,7 @@ export default class Editor {
       )
       .on('mousemove.stop', () => {})
       .on('mousedown.stop', () => {});
+    this.areaEl.el.style.backgroundColor = 'white';
     this.el = h('div', `${cssPrefix}-editor`)
       .child(this.areaEl).hide();
     this.suggest.bindInputEvents(this.textEl);
