@@ -432,7 +432,7 @@ export default class DataProxy {
     this.merges = new Merges(); // [CellRange, ...]
     this.rows = new Rows(this.settings.row);
     this.cols = new Cols(this.settings.col);
-    this.validations = new Validations();
+    this.validations = new Validations(this);
     this.hyperlinks = {};
     this.comments = {};
     // save data end

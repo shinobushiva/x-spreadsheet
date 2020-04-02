@@ -87,6 +87,12 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
     if (cell.variable) {
       draw.varialbe(dbox);
     }
+    if ('validation' in cell) {
+      const validation = data.validations.getData()[cell.validation];
+      if (validation && validation.type === 'list') {
+        draw.validation(dbox);
+      }
+    }
   });
 }
 
@@ -321,6 +327,7 @@ class Table {
 
   // INFO: rendering here
   render() {
+    // const startTime = Date.now();
     // resize canvas
     const { data } = this;
     const { rows, cols } = data;
@@ -340,6 +347,7 @@ class Table {
     const tx = data.freezeTotalWidth();
     const ty = data.freezeTotalHeight();
     const { x, y } = data.scroll;
+
     // 1
     renderContentGrid.call(this, viewRange, fw, fh, tx, ty);
     renderContent.call(this, viewRange, fw, fh, -x, -y);
@@ -375,6 +383,7 @@ class Table {
       // 5
       renderFreezeHighlightLine.call(this, fw, fh, tx, ty);
     }
+    // console.log('drawn in', Date.now() - startTime);
   }
 
   clear() {

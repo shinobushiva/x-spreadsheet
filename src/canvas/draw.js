@@ -4,7 +4,7 @@ function dpr() {
 }
 
 function thinLineWidth() {
-  return dpr() - 0.5;
+  return dpr() / 2 - 0.5;
 }
 
 function npx(px) {
@@ -335,7 +335,7 @@ class Draw {
     }
   }
 
-  cornerTriangle(box, color = 'rgba(0, 0, 0, .5)', size = 16) {
+  cornerTriangle(box, color = 'rgba(0, 0, 0, .5)', size = 8) {
     const { ctx } = this;
     const { x, y, width } = box;
     const sx = x + width - 1;
@@ -359,11 +359,63 @@ class Draw {
   }
 
   frozen(box) {
-    this.cornerTriangle(box, 'rgba(0, 0, 0, .5)');
+    const color = 'rgba(0, 0, 0, .45)';
+    const { ctx } = this;
+    const {
+      x, y,
+    } = box;
+    const size = 4;
+    const sx = x + 6;
+    const sy = y + 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(npx(sx), npx(sy));
+    ctx.lineTo(npx(sx), npx(sy + size));
+    ctx.lineTo(npx(sx - size), npx(sy + size));
+    ctx.lineTo(npx(sx - size), npx(sy));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
   }
 
   varialbe(box) {
-    this.cornerTriangle(box, 'rgba(255,192,203,1)');
+    const color = 'rgba(255,192,203,1)';
+    const { ctx } = this;
+    const { x, y, width, height } = box;
+    const size = 12;
+    const sx = x + width - 1;
+    const sy = y + height - 1;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(npx(sx - size), npx(sy));
+    ctx.lineTo(npx(sx), npx(sy - size));
+    ctx.lineTo(npx(sx), npx(sy - size + 6));
+    ctx.lineTo(npx(sx - size + 6), npx(sy));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  validation(box) {
+    const color = 'rgba(0, 0, 0, .45)';
+    const { ctx } = this;
+    const {
+      x, y, width, height,
+    } = box;
+    const size = Math.min(height / 2, 8);
+    const sx = x + width - 4;
+    const sy = y + (height - size) / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(npx(sx), npx(sy + size));
+    ctx.lineTo(npx(sx - size), npx(sy + size));
+    ctx.lineTo(npx(sx - size / 2), npx(sy));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
   }
 
   rect(box, dtextcb) {

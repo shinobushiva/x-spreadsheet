@@ -53,10 +53,11 @@ class Validation {
   }
 }
 class Validations {
-  constructor() {
+  constructor(dataProxy) {
     this._ = [];
     // ri_ci: errMessage
     this.errors = new Map();
+    this.dataProxy = dataProxy;
   }
 
   getError(ri, ci) {
@@ -88,12 +89,22 @@ class Validations {
     const validator = new Validator(
       type, required, value, operator,
     );
+    let idx;
     const v = this.getByValidator(validator);
     if (v !== null) {
       v.addRef(ref);
+      idx = this._.findIndex((vv) => {
+        return vv.validator.equals(v.validator);
+      });
     } else {
       this._.push(new Validation(mode, [ref], validator));
+      idx = this._.length - 1;
     }
+
+    CellRange.valueOf(ref).each((ri, ci) => {
+      const cell = this.dataProxy.getCell(ri, ci);
+      cell.validation = idx;
+    });
   }
 
   getByValidator(validator) {
