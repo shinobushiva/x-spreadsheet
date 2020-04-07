@@ -51,7 +51,7 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
 
   const dbox = getDrawBox(data, rindex, cindex, yoffset);
   const style = data.getCellStyleOrDefault(nrindex, cindex);
-  // dbox.bgcolor = style.bgcolor;
+  dbox.bgcolor = style.bgcolor;
 
   if (style.border) {
     dbox.setBorders(style.border);
