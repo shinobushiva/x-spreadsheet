@@ -129,6 +129,10 @@ class Validations {
     this.each((it) => {
       it.remove(cellRange);
     });
+    cellRange.each((ri, ci) => {
+      const cell = this.dataProxy.getCell(ri, ci);
+      delete cell.validation;
+    });
   }
 
   each(cb) {
