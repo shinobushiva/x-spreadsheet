@@ -49,32 +49,35 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
     frozen = true;
   }
 
-  const style = data.getCellStyleOrDefault(nrindex, cindex);
   const dbox = getDrawBox(data, rindex, cindex, yoffset);
-  dbox.bgcolor = style.bgcolor;
-  if (style.border !== undefined) {
+  const style = data.getCellStyleOrDefault(nrindex, cindex);
+  // dbox.bgcolor = style.bgcolor;
+
+  if (style.border) {
     dbox.setBorders(style.border);
-    // bboxes.push({ ri: rindex, ci: cindex, box: dbox });
     draw.strokeBorders(dbox);
   }
+  
   draw.rect(dbox, () => {
     // render text
-    let cellText = _cell.render(cell.text || '', formulam, (y, x) => (data.getCellTextOrDefault(x, y)));
-    if (style.format) {
-      // console.log(data.formatm, '>>', cell.format);
-      cellText = formatm[style.format].render(cellText);
+    if (cell.text && cell.text.length > 0) {
+      let cellText = _cell.render(cell.text || '', formulam, (y, x) => (data.getCellTextOrDefault(x, y)));
+      if (style.format) {
+        // console.log(data.formatm, '>>', cell.format);
+        cellText = formatm[style.format].render(cellText);
+      }
+      const font = Object.assign({}, style.font);
+      font.size = getFontSizePxByPt(font.size);
+      // console.log('style:', style);
+      draw.text(cellText, dbox, {
+        align: style.align,
+        valign: style.valign,
+        font,
+        color: style.color,
+        strike: style.strike,
+        underline: style.underline,
+      }, style.textwrap);
     }
-    const font = Object.assign({}, style.font);
-    font.size = getFontSizePxByPt(font.size);
-    // console.log('style:', style);
-    draw.text(cellText, dbox, {
-      align: style.align,
-      valign: style.valign,
-      font,
-      color: style.color,
-      strike: style.strike,
-      underline: style.underline,
-    }, style.textwrap);
     // error
     const error = data.validations.getError(rindex, cindex);
     if (error) {
@@ -123,7 +126,9 @@ function renderImages(fw, fh, tx, ty) {
   }
 }
 
+// INFO:RENDERING border and text rendering can be refined.
 function renderContent(viewRange, fw, fh, tx, ty) {
+  // const startTime = Date.now();
   const { draw, data } = this;
   draw.save();
   draw.translate(fw, fh)
@@ -141,19 +146,15 @@ function renderContent(viewRange, fw, fh, tx, ty) {
   };
 
   const exceptRowTotalHeight = data.exceptRowTotalHeight(viewRange.sri, viewRange.eri);
-  // 1 render cell
+
   draw.save();
   draw.translate(0, -exceptRowTotalHeight);
+  // 1 render cell
   viewRange.each((ri, ci) => {
     renderCell(draw, data, ri, ci);
   }, ri => filteredTranslateFunc(ri));
-  draw.restore();
-
-
   // 2 render mergeCell
   const rset = new Set();
-  draw.save();
-  draw.translate(0, -exceptRowTotalHeight);
   data.eachMergesInView(viewRange, ({ sri, sci, eri }) => {
     if (!exceptRowSet.has(sri)) {
       renderCell(draw, data, sri, sci);
@@ -173,6 +174,8 @@ function renderContent(viewRange, fw, fh, tx, ty) {
   draw.save();
   renderImages.call(this, fw, fh, tx, ty);
   draw.restore();
+
+  // console.log('1. drawn in', Date.now() - startTime);
 }
 
 
@@ -327,7 +330,6 @@ class Table {
 
   // INFO: rendering here
   render() {
-    // const startTime = Date.now();
     // resize canvas
     const { data } = this;
     const { rows, cols } = data;
@@ -383,7 +385,6 @@ class Table {
       // 5
       renderFreezeHighlightLine.call(this, fw, fh, tx, ty);
     }
-    // console.log('drawn in', Date.now() - startTime);
   }
 
   clear() {

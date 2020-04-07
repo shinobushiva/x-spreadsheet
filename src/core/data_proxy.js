@@ -450,6 +450,7 @@ export default class DataProxy {
     this.magnification = 1.0;
 
     this.setDataHook = this.settings.setDataHook;
+    this.cellRectCache = [];
   }
 
   addValidation(mode, ref, validator) {
@@ -786,7 +787,8 @@ export default class DataProxy {
         ci = merge.sci;
         ({
           left, top, width, height,
-        } = this.cellRect(ri, ci));
+        } = this.cellRect(ri, ci)
+        );
       }
     }
     return {
@@ -835,6 +837,7 @@ export default class DataProxy {
         this.rows.setCell(sri, sci, cell);
       });
     }
+    this.updateCellRectCache();
   }
 
   unmerge() {
@@ -845,6 +848,7 @@ export default class DataProxy {
       this.rows.deleteCell(sri, sci, 'merge');
       this.merges.deleteWithin(selector.range);
     });
+    this.updateCellRectCache();
   }
 
   canAutofilter() {
@@ -1000,33 +1004,35 @@ export default class DataProxy {
     }
   }
 
-  cellRect(ri, ci) {
+  updateCellRectCache() {
     const { rows, cols } = this;
-    const left = cols.sumWidth(0, ci);
-    const top = rows.sumHeight(0, ri);
-    const cell = rows.getCell(ri, ci);
-    let width = cols.getWidth(ci);
-    let height = rows.getHeight(ri);
-    if (cell !== null) {
-      if (cell.merge) {
-        const [rn, cn] = cell.merge;
-        // console.log('cell.merge:', cell.merge);
-        if (rn > 0) {
-          for (let i = 1; i <= rn; i += 1) {
-            height += rows.getHeight(ri + i);
-          }
+    rows.each((rii) => {
+      rows.eachCells(rii, (cii, cell) => {
+        const ri = parseInt(rii, 10);
+        const ci = parseInt(cii, 10);
+        // INFO:RENDER May not have to calc every time
+        const left = cols.sumWidth(0, ci);
+        const top = rows.sumHeight(0, ri);
+        let width = cols.sumWidth(ci, ci + 1);
+        let height = rows.sumHeight(ri, ri + 1);
+        if (cell !== null && cell.merge) {
+          const [rn, cn] = cell.merge;
+          width = cols.sumWidth(ci, ci + cn + 1);
+          height = rows.sumHeight(ri, ri + rn + 1);
         }
-        if (cn > 0) {
-          for (let i = 1; i <= cn; i += 1) {
-            width += cols.getWidth(ci + i);
-          }
-        }
-      }
+        this.cellRectCache[ri * rows.len * 1 + ci * 1] = {
+          left, top, width, height, cell,
+        };
+      });
+    });
+  }
+
+  cellRect(ri, ci) {
+    const { rows } = this;
+    if (!this.cellRectCache[ri * rows.len + ci]) {
+      this.updateCellRectCache();
     }
-    // console.log('data:', this.d);
-    return {
-      left, top, width, height, cell,
-    };
+    return this.cellRectCache[ri * rows.len * 1 + ci * 1];
   }
 
   getCell(ri, ci) {
@@ -1092,12 +1098,14 @@ export default class DataProxy {
     return this.rows.sumHeight(0, this.freeze[0]);
   }
 
+  // XXX: unused?
   setRowHeight(ri, height) {
     this.changeData(() => {
       this.rows.setHeight(ri, height);
     });
   }
 
+  // XXX: unused?
   setColWidth(ci, width) {
     this.changeData(() => {
       this.cols.setWidth(ci, width);

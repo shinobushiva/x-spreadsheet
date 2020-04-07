@@ -218,8 +218,6 @@ class Draw {
       align, valign, font, color, strike, underline,
     } = attr;
     const tx = box.textx(align);
-    ctx.save();
-    ctx.beginPath();
     this.attr({
       textAlign: align,
       textBaseline: valign,
@@ -262,7 +260,6 @@ class Draw {
       }
       ty += font.size + 2;
     });
-    ctx.restore();
     return this;
   }
 
@@ -306,32 +303,28 @@ class Draw {
       borderTop, borderRight, borderBottom, borderLeft,
     } = box;
     if (borderTop) {
-      ctx.save();
       ctx.beginPath();
       this.border(...borderTop);
       this.line(...box.topxys());
-      ctx.restore();
+      ctx.closePath();
     }
     if (borderRight) {
-      ctx.save();
       ctx.beginPath();
       this.border(...borderRight);
       this.line(...box.rightxys());
-      ctx.restore();
+      ctx.closePath();
     }
     if (borderBottom) {
-      ctx.save();
       ctx.beginPath();
       this.border(...borderBottom);
       this.line(...box.bottomxys());
-      ctx.restore();
+      ctx.closePath();
     }
     if (borderLeft) {
-      ctx.save();
       ctx.beginPath();
       this.border(...borderLeft);
       this.line(...box.leftxys());
-      ctx.restore();
+      ctx.closePath();
     }
   }
 
@@ -339,7 +332,6 @@ class Draw {
     const { ctx } = this;
     const { x, y, width } = box;
     const sx = x + width - 1;
-    ctx.save();
     ctx.beginPath();
     ctx.moveTo(npx(sx - size), npx(y - 1));
     ctx.lineTo(npx(sx), npx(y - 1));
@@ -347,7 +339,6 @@ class Draw {
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.restore();
   }
 
   dropdown(box) {
@@ -359,15 +350,14 @@ class Draw {
   }
 
   frozen(box) {
-    const color = 'rgba(0, 0, 0, .45)';
     const { ctx } = this;
+    const color = 'rgba(0, 0, 0, .45)';
     const {
       x, y,
     } = box;
     const size = 4;
     const sx = x + 6;
     const sy = y + 2;
-    ctx.save();
     ctx.beginPath();
     ctx.moveTo(npx(sx), npx(sy));
     ctx.lineTo(npx(sx), npx(sy + size));
@@ -376,7 +366,6 @@ class Draw {
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.restore();
   }
 
   varialbe(box) {
@@ -386,7 +375,6 @@ class Draw {
     const size = 12;
     const sx = x + width - 1;
     const sy = y + height - 1;
-    ctx.save();
     ctx.beginPath();
     ctx.moveTo(npx(sx - size), npx(sy));
     ctx.lineTo(npx(sx), npx(sy - size));
@@ -395,19 +383,17 @@ class Draw {
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.restore();
   }
 
   validation(box) {
-    const color = 'rgba(0, 0, 0, .45)';
     const { ctx } = this;
+    const color = 'rgba(0, 0, 0, .45)';
     const {
       x, y, width, height,
     } = box;
     const size = Math.min(height / 2, 8);
     const sx = x + width - 4;
     const sy = y + (height - size) / 2;
-    ctx.save();
     ctx.beginPath();
     ctx.moveTo(npx(sx), npx(sy + size));
     ctx.lineTo(npx(sx - size), npx(sy + size));
@@ -415,7 +401,6 @@ class Draw {
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.restore();
   }
 
   rect(box, dtextcb) {
@@ -430,6 +415,7 @@ class Draw {
     ctx.clip();
     ctx.fill();
     dtextcb();
+    ctx.closePath();
     ctx.restore();
   }
 
