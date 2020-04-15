@@ -405,7 +405,7 @@ function getCellRowByY(y, scrollOffsety) {
   top -= height;
   // console.log('ri:', ri, ', top:', top, ', height:', height);
 
-  if (top <= 0) {
+  if (top <= 0 && this.settings.showHeader) {
     return { ri: -1, top: 0, height };
   }
 
@@ -783,10 +783,10 @@ export default class DataProxy {
     } = this;
     let { ri, top, height } = getCellRowByY.call(this, y / mag, scroll.y);
     let { ci, left, width } = getCellColByX.call(this, x / mag, scroll.x);
-    if (ci === -1) {
+    if (ci === -1 && this.settings.showHeader) {
       width = cols.totalWidth();
     }
-    if (ri === -1) {
+    if (ri === -1 && this.settings.showHeader) {
       height = rows.totalHeight();
     }
     if (ri >= 0 || ci >= 0) {
