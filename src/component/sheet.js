@@ -163,9 +163,8 @@ function selectorMove(multiple, direction) {
 
 function transformMousePos(evt) {
   const { data } = this;
-  const { rows, cols } = data;
-  const fw = cols.indexWidth;
-  const fh = rows.height;
+  const fw = data.getFixedHeaderWidth();
+  const fh = data.getFixedHeaderHeight();
   const { offsetX, offsetY } = evt;
   const { x, y } = data.scroll;
   const mag = data.magnification;
@@ -200,7 +199,7 @@ function overlayerMousemove(evt) {
     rowResizer, colResizer, tableEl, data,
   } = this;
   const { rows, cols } = data;
-  if (offsetX > cols.indexWidth && offsetY > rows.height) {
+  if (offsetX > data.getFixedHeaderWidth() && offsetY > data.getFixedHeaderHeight()) {
     rowResizer.hide();
     colResizer.hide();
     return;
@@ -208,7 +207,7 @@ function overlayerMousemove(evt) {
   const tRect = tableEl.box();
   const cRect = data.getCellRectByXY(evt.offsetX, evt.offsetY);
   if (cRect.ri >= 0 && cRect.ci === -1) {
-    cRect.width = cols.indexWidth;
+    cRect.width = data.getFixedHeaderWidth();
     rowResizer.show(cRect, {
       width: tRect.width,
     });
@@ -221,7 +220,7 @@ function overlayerMousemove(evt) {
     rowResizer.hide();
   }
   if (cRect.ri === -1 && cRect.ci >= 0) {
-    cRect.height = rows.height;
+    cRect.height = data.getFixedHeaderHeight();
     colResizer.show(cRect, {
       height: tRect.height,
     });
@@ -985,7 +984,7 @@ export default class Sheet {
     // table
     this.tableEl = h('canvas', `${cssPrefix}-table`);
     // resizer
-    this.rowResizer = new Resizer(false, data.rows.height);
+    this.rowResizer = new Resizer(false, data.getFixedHeaderHeight());
     this.colResizer = new Resizer(true, data.cols.minWidth);
     // scrollbar
     this.verticalScrollbar = new Scrollbar(true);
@@ -994,7 +993,7 @@ export default class Sheet {
     this.editor = new Editor(
       formulas,
       () => this.getTableOffset(),
-      data.rows.height,
+      data.getFixedHeaderHeight(),
     );
     // data validation
     this.modalValidation = new ModalValidation();
@@ -1092,13 +1091,12 @@ export default class Sheet {
     // INFO:SCALE: This is to set left top corner of the table
     const mag = this.data.magnification;
 
-    const { rows, cols } = this.data;
     const { width, height } = this.getRect();
     const res = {
-      width: (width - cols.indexWidth) * mag,
-      height: (height - rows.height) * mag,
-      left: (cols.indexWidth) * mag,
-      top: (rows.height) * mag,
+      width: (width - this.data.getFixedHeaderWidth()) * mag,
+      height: (height - this.data.getFixedHeaderHeight()) * mag,
+      left: (this.data.getFixedHeaderWidth()) * mag,
+      top: (this.data.getFixedHeaderHeight()) * mag,
     };
     return res;
   }

@@ -75,7 +75,10 @@ const defaultSettings = {
   },
   showGrid: true,
   showToolbar: true,
+  showBottombar: true,
   showContextmenu: true,
+  showHeader: true,
+  formMode: false,
   row: {
     len: 100,
     height: 25,
@@ -129,6 +132,10 @@ function canPaste(src, dst, error = () => {}) {
   return true;
 }
 function copyPaste(srcCellRange, dstCellRange, what, autofill = false) {
+  if (this.settings.formMode) {
+    // eslint-disable-next-line no-param-reassign
+    what = 'text';
+  }
   const { rows, merges } = this;
   // delete dest merge
   if (what === 'all' || what === 'format') {
@@ -140,7 +147,9 @@ function copyPaste(srcCellRange, dstCellRange, what, autofill = false) {
       // console.log('cell:', ri, ci, cell);
       const [rn, cn] = cell.merge;
       if (rn <= 0 && cn <= 0) return;
-      merges.add(new CellRange(ri, ci, ri + rn, ci + cn));
+      if (!this.settings.formMode) {
+        merges.add(new CellRange(ri, ci, ri + rn, ci + cn));
+      }
     }
   });
 }
@@ -377,8 +386,8 @@ function getCellRowByY(y, scrollOffsety) {
   const { rows } = this;
   const fsh = this.freezeTotalHeight();
   // console.log('y:', y, ', fsh:', fsh);
-  let inits = rows.height;
-  if (fsh + rows.height < y) inits -= scrollOffsety;
+  let inits = this.getFixedHeaderHeight();
+  if (fsh + this.getFixedHeaderHeight() < y) inits -= scrollOffsety;
 
   // handle ri in autofilter
   const frset = this.exceptRowSet;
@@ -406,18 +415,18 @@ function getCellRowByY(y, scrollOffsety) {
 function getCellColByX(x, scrollOffsetx) {
   const { cols } = this;
   const fsw = this.freezeTotalWidth();
-  let inits = cols.indexWidth;
-  if (fsw + cols.indexWidth < x) inits -= scrollOffsetx;
+  let inits = this.getFixedHeaderWidth();
+  if (fsw + this.getFixedHeaderWidth() < x) inits -= scrollOffsetx;
   const [ci, left, width] = helper.rangeReduceIf(
     0,
     cols.len,
     inits,
-    cols.indexWidth,
+    this.getFixedHeaderWidth(),
     x,
     i => cols.getWidth(i),
   );
   if (left <= 0) {
-    return { ci: -1, left: 0, width: cols.indexWidth };
+    return { ci: -1, left: 0, width: this.getFixedHeaderWidth() };
   }
   return { ci: ci - 1, left, width };
 }
@@ -696,8 +705,8 @@ export default class DataProxy {
     const {
       left, top, width, height,
     } = this.getSelectedRect();
-    const x1 = x - this.cols.indexWidth * mag;
-    const y1 = y - this.rows.height * mag;
+    const x1 = x - this.getFixedHeaderWidth() * mag;
+    const y1 = y - this.getFixedHeaderHeight() * mag;
     // console.log('x:', x, ',y:', y, 'left:', left, 'top:', top);
     // console.log('width:', width, ',height:', height);
     // console.log(
@@ -794,6 +803,16 @@ export default class DataProxy {
     return {
       ri, ci, left, top, width, height,
     };
+  }
+
+  getFixedHeaderWidth() {
+    const { cols } = this;
+    return this.settings.showHeader ? cols.indexWidth : 0;
+  }
+
+  getFixedHeaderHeight() {
+    const { rows } = this;
+    return this.settings.showHeader ? rows.height : 0;
   }
 
   isSignleSelected() {
@@ -1113,9 +1132,11 @@ export default class DataProxy {
   }
 
   viewHeight() {
-    const { view, showToolbar } = this.settings;
+    const { view, showToolbar, showBottombar } = this.settings;
     let h = view.height();
-    h -= bottombarHeight;
+    if (showBottombar) {
+      h -= bottombarHeight;
+    }
     if (showToolbar) {
       h -= toolbarHeight;
     }

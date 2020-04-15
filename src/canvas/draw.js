@@ -355,7 +355,7 @@ class Draw {
     const {
       x, y,
     } = box;
-    const size = 4;
+    const size = 3;
     const sx = x + 6;
     const sy = y + 2;
     ctx.beginPath();
@@ -369,23 +369,24 @@ class Draw {
   }
 
   varialbe(box) {
-    const color = 'rgba(255,192,203,1)';
+    // const color = 'rgba(255,192,203,1)';
+    const color = 'rgba(0, 0, 0, .45)';
     const { ctx } = this;
     const { x, y, width, height } = box;
-    const size = 12;
+    // const size = 12;
     const sx = x + width - 1;
     const sy = y + height - 1;
     ctx.beginPath();
-    ctx.moveTo(npx(sx - size), npx(sy));
-    ctx.lineTo(npx(sx), npx(sy - size));
-    ctx.lineTo(npx(sx), npx(sy - size + 6));
-    ctx.lineTo(npx(sx - size + 6), npx(sy));
+    ctx.moveTo(npx(x + 5), npx(sy - 2));
+    ctx.lineTo(npx(sx - 4), npx(sy - 2));
     ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
+    ctx.lineWidth = 0.25;
+    // ctx.setLineDash([npx(4), npx(2)]);
+    ctx.strokeStyle = color;
+    ctx.stroke();
   }
 
-  validation(box) {
+  list(box) {
     const { ctx } = this;
     const color = 'rgba(0, 0, 0, .45)';
     const {
@@ -395,9 +396,9 @@ class Draw {
     const sx = x + width - 4;
     const sy = y + (height - size) / 2;
     ctx.beginPath();
-    ctx.moveTo(npx(sx), npx(sy + size));
-    ctx.lineTo(npx(sx - size), npx(sy + size));
-    ctx.lineTo(npx(sx - size / 2), npx(sy));
+    ctx.moveTo(npx(sx - size), npx(sy));
+    ctx.lineTo(npx(sx), npx(sy));
+    ctx.lineTo(npx(sx - size / 2), npx(sy + size));
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();

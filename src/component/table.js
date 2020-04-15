@@ -93,7 +93,7 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
     if ('validation' in cell) {
       const validation = data.validations.getData()[cell.validation];
       if (validation && validation.type === 'list') {
-        draw.validation(dbox);
+        draw.list(dbox);
       }
     }
   });
@@ -332,11 +332,10 @@ class Table {
   render() {
     // resize canvas
     const { data } = this;
-    const { rows, cols } = data;
     // fixed width of header
-    const fw = cols.indexWidth;
+    const fw = data.getFixedHeaderWidth();
     // fixed height of header
-    const fh = rows.height;
+    const fh = data.getFixedHeaderHeight();
 
     this.draw.resize(data.viewWidth(), data.viewHeight());
     this.clear();
@@ -353,8 +352,10 @@ class Table {
     // 1
     renderContentGrid.call(this, viewRange, fw, fh, tx, ty);
     renderContent.call(this, viewRange, fw, fh, -x, -y);
-    renderFixedHeaders.call(this, 'all', viewRange, fw, fh, tx, ty);
-    renderFixedLeftTopCell.call(this, fw, fh);
+    if (data.settings.showHeader) {
+      renderFixedHeaders.call(this, 'all', viewRange, fw, fh, tx, ty);
+      renderFixedLeftTopCell.call(this, fw, fh);
+    }
     const [fri, fci] = data.freeze;
     if (fri > 0 || fci > 0) {
       // 2
@@ -365,7 +366,9 @@ class Table {
         vr.h = ty;
         renderContentGrid.call(this, vr, fw, fh, tx, 0);
         renderContent.call(this, vr, fw, fh, -x, 0);
-        renderFixedHeaders.call(this, 'top', vr, fw, fh, tx, 0);
+        if (data.settings.showHeader) {
+          renderFixedHeaders.call(this, 'top', vr, fw, fh, tx, 0);
+        }
       }
       // 3
       if (fci > 0) {
@@ -374,13 +377,17 @@ class Table {
         vr.eci = fci - 1;
         vr.w = tx;
         renderContentGrid.call(this, vr, fw, fh, 0, ty);
-        renderFixedHeaders.call(this, 'left', vr, fw, fh, 0, ty);
+        if (data.settings.showHeader) {
+          renderFixedHeaders.call(this, 'left', vr, fw, fh, 0, ty);
+        }
         renderContent.call(this, vr, fw, fh, 0, -y);
       }
       // 4
       const freezeViewRange = data.freezeViewRange();
       renderContentGrid.call(this, freezeViewRange, fw, fh, 0, 0);
-      renderFixedHeaders.call(this, 'all', freezeViewRange, fw, fh, 0, 0);
+      if (data.settings.showHeader) {
+        renderFixedHeaders.call(this, 'all', freezeViewRange, fw, fh, 0, 0);
+      }
       renderContent.call(this, freezeViewRange, fw, fh, 0, 0);
       // 5
       renderFreezeHighlightLine.call(this, fw, fh, tx, ty);
