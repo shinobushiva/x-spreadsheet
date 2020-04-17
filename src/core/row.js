@@ -10,6 +10,7 @@ class Rows {
   }
 
   getHeight(ri) {
+
     if (this.isHide(ri)) return 0;
     const row = this.get(ri);
     if (row && row.height) {
@@ -65,7 +66,10 @@ class Rows {
   }
 
   getOrNew(ri) {
-    this._[ri] = this._[ri] || { cells: {} };
+    if (this._[ri] && this._[ri].cells) {
+      return this._[ri];
+    }
+    this._[ri] = { cells: {} };
     return this._[ri];
   }
 
@@ -92,6 +96,9 @@ class Rows {
   // what: all | text | format
   setCell(ri, ci, cell, what = 'all') {
     const row = this.getOrNew(ri);
+    if (row.cells[ci] && !row.cells[ci].editable) {
+      return;
+    }
     if (what === 'all') {
       row.cells[ci] = cell;
     } else if (what === 'text') {

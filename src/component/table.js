@@ -3,6 +3,7 @@ import { getFontSizePxByPt } from '../core/font';
 import _cell from '../core/cell';
 import { formulam } from '../core/formula';
 import { formatm } from '../core/format';
+import ImageSelector from './image_selector';
 
 import {
   Draw, DrawBox, thinLineWidth, npx,
@@ -32,22 +33,6 @@ function getDrawBox(data, rindex, cindex, yoffset = 0) {
   } = data.cellRect(rindex, cindex);
   return new DrawBox(left, top + yoffset, width, height, cellPaddingWidth);
 }
-/*
-function renderCellBorders(bboxes, translateFunc) {
-  const { draw } = this;
-  if (bboxes) {
-    const rset = new Set();
-    // console.log('bboxes:', bboxes);
-    bboxes.forEach(({ ri, ci, box }) => {
-      if (!rset.has(ri)) {
-        rset.add(ri);
-        translateFunc(ri);
-      }
-      draw.strokeBorders(box);
-    });
-  }
-}
-*/
 
 export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
   const { sortedRowMap, rows, cols } = data;
@@ -64,32 +49,35 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
     frozen = true;
   }
 
-  const style = data.getCellStyleOrDefault(nrindex, cindex);
   const dbox = getDrawBox(data, rindex, cindex, yoffset);
+  const style = data.getCellStyleOrDefault(nrindex, cindex);
   dbox.bgcolor = style.bgcolor;
-  if (style.border !== undefined) {
+
+  if (style.border) {
     dbox.setBorders(style.border);
-    // bboxes.push({ ri: rindex, ci: cindex, box: dbox });
     draw.strokeBorders(dbox);
   }
+  
   draw.rect(dbox, () => {
     // render text
-    let cellText = _cell.render(cell.text || '', formulam, (y, x) => (data.getCellTextOrDefault(x, y)));
-    if (style.format) {
-      // console.log(data.formatm, '>>', cell.format);
-      cellText = formatm[style.format].render(cellText);
+    if (cell.text && cell.text.length > 0) {
+      let cellText = _cell.render(cell.text || '', formulam, (y, x) => (data.getCellTextOrDefault(x, y)));
+      if (style.format) {
+        // console.log(data.formatm, '>>', cell.format);
+        cellText = formatm[style.format].render(cellText);
+      }
+      const font = Object.assign({}, style.font);
+      font.size = getFontSizePxByPt(font.size);
+      // console.log('style:', style);
+      draw.text(cellText, dbox, {
+        align: style.align,
+        valign: style.valign,
+        font,
+        color: style.color,
+        strike: style.strike,
+        underline: style.underline,
+      }, style.textwrap);
     }
-    const font = Object.assign({}, style.font);
-    font.size = getFontSizePxByPt(font.size);
-    // console.log('style:', style);
-    draw.text(cellText, dbox, {
-      align: style.align,
-      valign: style.valign,
-      font,
-      color: style.color,
-      strike: style.strike,
-      underline: style.underline,
-    }, style.textwrap);
     // error
     const error = data.validations.getError(rindex, cindex);
     if (error) {
@@ -98,6 +86,15 @@ export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
     }
     if (frozen) {
       draw.frozen(dbox);
+    }
+    if (cell.variable) {
+      draw.varialbe(dbox);
+    }
+    if ('validation' in cell) {
+      const validation = data.validations.getData()[cell.validation];
+      if (validation && validation.type === 'list') {
+        draw.list(dbox);
+      }
     }
   });
 }
@@ -117,7 +114,21 @@ function renderAutofilter(viewRange) {
   }
 }
 
+function renderImages(fw, fh, tx, ty) {
+  const { draw, data } = this;
+  if (data.images) {
+    data.images.forEach((image) => {
+      draw.image(image, fw, fh, tx, ty);
+    });
+  }
+  if (this.imageSelector) {
+    draw.imageHandler(this.imageSelector, fw, fh, tx, ty);
+  }
+}
+
+// INFO:RENDERING border and text rendering can be refined.
 function renderContent(viewRange, fw, fh, tx, ty) {
+  // const startTime = Date.now();
   const { draw, data } = this;
   draw.save();
   draw.translate(fw, fh)
@@ -135,19 +146,15 @@ function renderContent(viewRange, fw, fh, tx, ty) {
   };
 
   const exceptRowTotalHeight = data.exceptRowTotalHeight(viewRange.sri, viewRange.eri);
-  // 1 render cell
+
   draw.save();
   draw.translate(0, -exceptRowTotalHeight);
+  // 1 render cell
   viewRange.each((ri, ci) => {
     renderCell(draw, data, ri, ci);
   }, ri => filteredTranslateFunc(ri));
-  draw.restore();
-
-
   // 2 render mergeCell
   const rset = new Set();
-  draw.save();
-  draw.translate(0, -exceptRowTotalHeight);
   data.eachMergesInView(viewRange, ({ sri, sci, eri }) => {
     if (!exceptRowSet.has(sri)) {
       renderCell(draw, data, sri, sci);
@@ -161,9 +168,16 @@ function renderContent(viewRange, fw, fh, tx, ty) {
 
   // 3 render autofilter
   renderAutofilter.call(this, viewRange);
-
   draw.restore();
+
+  // INFO: drawing images here
+  draw.save();
+  renderImages.call(this, fw, fh, tx, ty);
+  draw.restore();
+
+  // console.log('1. drawn in', Date.now() - startTime);
 }
+
 
 function renderSelectedHeaderCell(x, y, w, h) {
   const { draw } = this;
@@ -181,8 +195,12 @@ function renderSelectedHeaderCell(x, y, w, h) {
 // ty: moving distance on y-axis
 function renderFixedHeaders(type, viewRange, w, h, tx, ty) {
   const { draw, data } = this;
-  const sumHeight = viewRange.h; // rows.sumHeight(viewRange.sri, viewRange.eri + 1);
-  const sumWidth = viewRange.w; // cols.sumWidth(viewRange.sci, viewRange.eci + 1);
+
+  // INFO:SCALE: must be here
+  const mag = data.magnification;
+
+  const sumHeight = viewRange.h / mag; // rows.sumHeight(viewRange.sri, viewRange.eri + 1);
+  const sumWidth = viewRange.w / mag; // cols.sumWidth(viewRange.sci, viewRange.eci + 1);
   const nty = ty + h;
   const ntx = tx + w;
 
@@ -268,15 +286,18 @@ function renderContentGrid({
     draw.restore();
     return;
   }
+  // INFO:SCALE: must be here
+  const mag = data.magnification;
+
   // console.log('rowStart:', rowStart, ', rowLen:', rowLen);
   data.rowEach(sri, eri, (i, y, ch) => {
     // console.log('y:', y);
-    if (i !== sri) draw.line([0, y], [w, y]);
-    if (i === eri) draw.line([0, y + ch], [w, y + ch]);
+    if (i !== sri) draw.line([0, y], [w / mag, y]);
+    if (i === eri) draw.line([0, y + ch], [w / mag, y + ch]);
   });
   data.colEach(sci, eci, (i, x, cw) => {
-    if (i !== sci) draw.line([x, 0], [x, h]);
-    if (i === eci) draw.line([x + cw, 0], [x + cw, h]);
+    if (i !== sci) draw.line([x, 0], [x, h / mag]);
+    if (i === eci) draw.line([x + cw, 0], [x + cw, h / mag]);
   });
   draw.restore();
 }
@@ -299,6 +320,7 @@ class Table {
     this.el = el;
     this.draw = new Draw(el, data.viewWidth(), data.viewHeight());
     this.data = data;
+    this.imageSelector = new ImageSelector(this, this.draw);
   }
 
   resetData(data) {
@@ -306,28 +328,34 @@ class Table {
     this.render();
   }
 
+  // INFO: rendering here
   render() {
     // resize canvas
     const { data } = this;
-    const { rows, cols } = data;
     // fixed width of header
-    const fw = cols.indexWidth;
+    const fw = data.getFixedHeaderWidth();
     // fixed height of header
-    const fh = rows.height;
+    const fh = data.getFixedHeaderHeight();
 
     this.draw.resize(data.viewWidth(), data.viewHeight());
     this.clear();
 
+    // INFO:SCALE: This will make cell drawing scaled.
+    const mag = data.magnification;
+    this.draw.ctx.scale(mag, mag);
+
     const viewRange = data.viewRange();
-    // renderAll.call(this, viewRange, data.scroll);
     const tx = data.freezeTotalWidth();
     const ty = data.freezeTotalHeight();
     const { x, y } = data.scroll;
+
     // 1
     renderContentGrid.call(this, viewRange, fw, fh, tx, ty);
     renderContent.call(this, viewRange, fw, fh, -x, -y);
-    renderFixedHeaders.call(this, 'all', viewRange, fw, fh, tx, ty);
-    renderFixedLeftTopCell.call(this, fw, fh);
+    if (data.settings.showHeader) {
+      renderFixedHeaders.call(this, 'all', viewRange, fw, fh, tx, ty);
+      renderFixedLeftTopCell.call(this, fw, fh);
+    }
     const [fri, fci] = data.freeze;
     if (fri > 0 || fci > 0) {
       // 2
@@ -338,7 +366,9 @@ class Table {
         vr.h = ty;
         renderContentGrid.call(this, vr, fw, fh, tx, 0);
         renderContent.call(this, vr, fw, fh, -x, 0);
-        renderFixedHeaders.call(this, 'top', vr, fw, fh, tx, 0);
+        if (data.settings.showHeader) {
+          renderFixedHeaders.call(this, 'top', vr, fw, fh, tx, 0);
+        }
       }
       // 3
       if (fci > 0) {
@@ -347,13 +377,17 @@ class Table {
         vr.eci = fci - 1;
         vr.w = tx;
         renderContentGrid.call(this, vr, fw, fh, 0, ty);
-        renderFixedHeaders.call(this, 'left', vr, fw, fh, 0, ty);
+        if (data.settings.showHeader) {
+          renderFixedHeaders.call(this, 'left', vr, fw, fh, 0, ty);
+        }
         renderContent.call(this, vr, fw, fh, 0, -y);
       }
       // 4
       const freezeViewRange = data.freezeViewRange();
       renderContentGrid.call(this, freezeViewRange, fw, fh, 0, 0);
-      renderFixedHeaders.call(this, 'all', freezeViewRange, fw, fh, 0, 0);
+      if (data.settings.showHeader) {
+        renderFixedHeaders.call(this, 'all', freezeViewRange, fw, fh, 0, 0);
+      }
       renderContent.call(this, freezeViewRange, fw, fh, 0, 0);
       // 5
       renderFreezeHighlightLine.call(this, fw, fh, tx, ty);

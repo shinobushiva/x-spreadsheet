@@ -76,6 +76,43 @@ class Cols {
   totalWidth() {
     return this.sumWidth(0, this.len);
   }
+
+  deleteColumn(sci, eci) {
+    // eslint-disable-next-line no-plusplus
+    const cols = {};
+    for (let i = sci; i <= eci; i++) {
+      delete (this._[`${i}`]);
+    }
+    Object.keys(this._).forEach((key, idx) => {
+      cols[idx] = this._[key];
+    });
+    this.len = Object.keys(cols).length;
+    this._ = cols;
+  }
+
+  insertColumn(sci, n = 1) {
+    const idx = Object.keys(this._).findIndex(x => x === `${sci}`);
+    if (idx < 0) {
+      this._[`${sci}`] = {
+        width: 100,
+      };
+    } else {
+      const res = {};
+      Object.keys(this._).forEach((x) => {
+        const nx = parseInt(x, 10);
+        if (nx >= sci) {
+          res[`${nx + n}`] = this._[`${nx}`];
+        } else {
+          res[`${nx}`] = this._[`${nx}`];
+        }
+      });
+      res[`${sci}`] = {
+        width: 100,
+      };
+      this._ = res;
+    }
+    this.len += n;
+  }
 }
 
 export default {};

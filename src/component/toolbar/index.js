@@ -13,6 +13,7 @@ import Paintformat from './paintformat';
 import TextColor from './text_color';
 import FillColor from './fill_color';
 import FontSize from './font_size';
+import Magnification from './magnification';
 import Font from './font';
 import Format from './format';
 import Formula from './formula';
@@ -61,6 +62,7 @@ function moreResize() {
   let sumWidth2 = 12;
   const list1 = [];
   const list2 = [];
+  if (!btns2) return;
   btns2.forEach(([it, w], index) => {
     sumWidth += w;
     if (index === btns2.length - 1 || sumWidth < elBox.width) {
@@ -87,6 +89,7 @@ export default class Toolbar {
     this.widthFn = widthFn;
     this.isHide = isHide;
     const style = data.defaultStyle();
+    this.moreResize = moreResize.bind(this);
     this.items = [
       [
         this.undoEl = new Undo(),
@@ -94,6 +97,7 @@ export default class Toolbar {
         new Print(),
         this.paintformatEl = new Paintformat(),
         this.clearformatEl = new Clearformat(),
+        this.magnificationEl = new Magnification(),
       ],
       buildDivider(),
       [

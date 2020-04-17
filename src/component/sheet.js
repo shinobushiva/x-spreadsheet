@@ -88,7 +88,7 @@ function selectorMove(multiple, direction) {
   const {
     selector, data,
   } = this;
-  const { rows, cols } = data;
+  const { rows, cols, merges } = data;
   let [ri, ci] = selector.indexes;
   const { eri, eci } = selector.range;
   if (multiple) {
@@ -97,14 +97,54 @@ function selectorMove(multiple, direction) {
   // console.log('selector.move:', ri, ci);
   if (direction === 'left') {
     if (ci > 0) ci -= 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'right') {
     if (eci !== ci) ci = eci;
     if (ci < cols.len - 1) ci += 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'up') {
     if (ri > 0) ri -= 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'down') {
     if (eri !== ri) ri = eri;
     if (ri < rows.len - 1) ri += 1;
+    const merge = merges._.find(
+      m => m.sri <= ri
+        && m.eri >= ri
+        && m.sci <= ci
+        && m.eci >= ci,
+    );
+    if (merge) {
+      ri = merge.sri;
+      ci = merge.sci;
+    }
   } else if (direction === 'row-first') {
     ci = 0;
   } else if (direction === 'row-last') {
@@ -121,8 +161,36 @@ function selectorMove(multiple, direction) {
   scrollbarMove.call(this);
 }
 
+function transformMousePos(evt) {
+  const { data } = this;
+  const fw = data.getFixedHeaderWidth();
+  const fh = data.getFixedHeaderHeight();
+  const { offsetX, offsetY } = evt;
+  const { x, y } = data.scroll;
+  const mag = data.magnification;
+  const cx = offsetX / mag - fw + x;
+  const cy = offsetY / mag - fh + y;
+  return { cx, cy };
+}
+
+function overlayerMousedownImage(evt) {
+  const { table, data } = this;
+  const { cx, cy } = transformMousePos.call(this, evt);
+  table.imageSelector.mousedown(cx, cy, data.images);
+  table.render();
+}
+
+function overlayerMousemoveImage(evt) {
+  const { table } = this;
+  const { cx, cy } = transformMousePos.call(this, evt);
+
+  table.imageSelector.mousemove(cx, cy);
+  table.render();
+}
+
 // private methods
 function overlayerMousemove(evt) {
+  overlayerMousemoveImage.call(this, evt);
   // console.log('x:', evt.offsetX, ', y:', evt.offsetY);
   if (evt.buttons !== 0) return;
   if (evt.target.className === `${cssPrefix}-resizer-hover`) return;
@@ -131,7 +199,7 @@ function overlayerMousemove(evt) {
     rowResizer, colResizer, tableEl, data,
   } = this;
   const { rows, cols } = data;
-  if (offsetX > cols.indexWidth && offsetY > rows.height) {
+  if (offsetX > data.getFixedHeaderWidth() && offsetY > data.getFixedHeaderHeight()) {
     rowResizer.hide();
     colResizer.hide();
     return;
@@ -139,7 +207,7 @@ function overlayerMousemove(evt) {
   const tRect = tableEl.box();
   const cRect = data.getCellRectByXY(evt.offsetX, evt.offsetY);
   if (cRect.ri >= 0 && cRect.ci === -1) {
-    cRect.width = cols.indexWidth;
+    cRect.width = data.getFixedHeaderWidth();
     rowResizer.show(cRect, {
       width: tRect.width,
     });
@@ -152,7 +220,7 @@ function overlayerMousemove(evt) {
     rowResizer.hide();
   }
   if (cRect.ri === -1 && cRect.ci >= 0) {
-    cRect.height = rows.height;
+    cRect.height = data.getFixedHeaderHeight();
     colResizer.show(cRect, {
       height: tRect.height,
     });
@@ -286,7 +354,12 @@ function sheetReset() {
   const vRect = this.getRect();
   tableEl.attr(vRect);
   overlayerEl.offset(vRect);
-  overlayerCEl.offset(tOffset);
+  overlayerCEl.offset({
+    width: vRect.width,
+    height: vRect.height,
+    left: tOffset.left,
+    top: tOffset.top,
+  });
   el.css('width', `${vRect.width}px`);
   verticalScrollbarSet.call(this);
   horizontalScrollbarSet.call(this);
@@ -356,6 +429,10 @@ function overlayerMousedown(evt) {
   const {
     selector, data, table, sortFilter,
   } = this;
+  overlayerMousedownImage.call(this, evt);
+  if (table.imageSelector.selectedImage) {
+    return;
+  }
   const { offsetX, offsetY } = evt;
   const isAutofillEl = evt.target.className === `${cssPrefix}-selector-corner`;
   const cellRect = data.getCellRectByXY(offsetX, offsetY);
@@ -425,8 +502,12 @@ function editorSetOffset() {
 
 function editorSet() {
   const { editor, data } = this;
+  const cell = data.getSelectedCell();
+  if (cell && 'editable' in cell && cell.editable === false) {
+    return;
+  }
   editorSetOffset.call(this);
-  editor.setCell(data.getSelectedCell(), data.getSelectedValidator());
+  editor.setCell(cell, data.getSelectedValidator());
   clearClipboard.call(this);
 }
 
@@ -452,6 +533,7 @@ function rowResizerFinished(cRect, distance) {
   const { ri } = cRect;
   const { table, selector, data } = this;
   data.rows.setHeight(ri, distance);
+  data.updateCellRectCache();
   table.render();
   selector.resetAreaOffset();
   verticalScrollbarSet.call(this);
@@ -463,6 +545,7 @@ function colResizerFinished(cRect, distance) {
   const { table, selector, data } = this;
   data.cols.setWidth(ci, distance);
   // console.log('data:', data);
+  data.updateCellRectCache();
   table.render();
   selector.resetAreaOffset();
   horizontalScrollbarSet.call(this);
@@ -484,10 +567,14 @@ function insertDeleteRowColumn(type) {
   const { data } = this;
   if (type === 'insert-row') {
     data.insert('row');
+  } else if (type === 'insert-row-after') {
+    data.insert('row-after');
   } else if (type === 'delete-row') {
     data.delete('row');
   } else if (type === 'insert-column') {
     data.insert('column');
+  } else if (type === 'insert-column-after') {
+    data.insert('column-after');
   } else if (type === 'delete-column') {
     data.delete('column');
   } else if (type === 'delete-cell') {
@@ -536,6 +623,9 @@ function toolbarChange(type, value) {
     } else {
       this.freeze(0, 0);
     }
+  } else if (type === 'magnification') {
+    data.magnification = value;
+    sheetReset.call(this);
   } else {
     data.setSelectedCellAttr(type, value);
     if (type === 'formula' && !data.selector.multiple()) {
@@ -562,6 +652,7 @@ function sheetInitEvents() {
     editor,
     contextMenu,
     data,
+    table,
     toolbar,
     modalValidation,
     sortFilter,
@@ -595,6 +686,36 @@ function sheetInitEvents() {
       const { offsetX, offsetY } = evt;
       if (offsetY <= 0) colResizer.hide();
       if (offsetX <= 0) rowResizer.hide();
+    })
+    .on('mouseup', (evt) => {
+      const { cx, cy } = transformMousePos.call(this, evt);
+      table.imageSelector.mouseup(cx, cy);
+    })
+    .on('drop', (evt) => {
+      evt.preventDefault();
+      if (evt.dataTransfer.items) {
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < evt.dataTransfer.items.length; i++) {
+          const item = evt.dataTransfer.items[i];
+          if (item.kind === 'file') {
+            const file = item.getAsFile();
+            const { cx, cy } = transformMousePos.call(this, evt);
+            this.trigger('file-dropped', file, cx, cy);
+          }
+        }
+      } else {
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < evt.dataTransfer.files.length; i++) {
+          const item = evt.dataTransfer.files[i];
+          const file = item.getAsFile();
+          const { cx, cy } = transformMousePos.call(this, evt);
+          this.trigger('file-dropped', file, cx, cy);
+        }
+      }
+    })
+    .on('dragover', (evt) => {
+      // console.log('dragover', evt);
+      evt.preventDefault();
     });
 
   selector.inputChange = (v) => {
@@ -679,18 +800,24 @@ function sheetInitEvents() {
   });
 
   bind(window, 'paste', (evt) => {
+    if (!this.focusing) return;
     paste.call(this, 'all', evt);
     evt.preventDefault();
   });
 
   // for selector
   bind(window, 'keydown', (evt) => {
+    // console.log('keydown.evt: ', evt);
     if (!this.focusing) return;
+
+    if (table.imageSelector.keydown(this, evt)) {
+      this.reload();
+      return;
+    }
     const keyCode = evt.keyCode || evt.which;
     const {
       key, ctrlKey, shiftKey, metaKey,
     } = evt;
-    // console.log('keydown.evt: ', keyCode);
     if (ctrlKey || metaKey) {
       // const { sIndexes, eIndexes } = selector;
       // let what = 'all';
@@ -834,6 +961,19 @@ function sheetInitEvents() {
 
 export default class Sheet {
   constructor(targetEl, data) {
+    // eslint-disable-next-line no-undef
+    const resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.target === targetEl.el) {
+          if (this.toolbar) {
+            this.toolbar.moreResize();
+            this.reload();
+          }
+        }
+      });
+    });
+    resizeObserver.observe(targetEl.el);
+
     this.eventMap = new Map();
     const { view, showToolbar, showContextmenu } = data.settings;
     this.el = h('div', `${cssPrefix}-sheet`);
@@ -844,7 +984,7 @@ export default class Sheet {
     // table
     this.tableEl = h('canvas', `${cssPrefix}-table`);
     // resizer
-    this.rowResizer = new Resizer(false, data.rows.height);
+    this.rowResizer = new Resizer(false, data.getFixedHeaderHeight());
     this.colResizer = new Resizer(true, data.cols.minWidth);
     // scrollbar
     this.verticalScrollbar = new Scrollbar(true);
@@ -853,7 +993,7 @@ export default class Sheet {
     this.editor = new Editor(
       formulas,
       () => this.getTableOffset(),
-      data.rows.height,
+      data.getFixedHeaderHeight(),
     );
     // data validation
     this.modalValidation = new ModalValidation();
@@ -948,13 +1088,16 @@ export default class Sheet {
   }
 
   getTableOffset() {
-    const { rows, cols } = this.data;
+    // INFO:SCALE: This is to set left top corner of the table
+    const mag = this.data.magnification;
+
     const { width, height } = this.getRect();
-    return {
-      width: width - cols.indexWidth,
-      height: height - rows.height,
-      left: cols.indexWidth,
-      top: rows.height,
+    const res = {
+      width: (width - this.data.getFixedHeaderWidth()) * mag,
+      height: (height - this.data.getFixedHeaderHeight()) * mag,
+      left: (this.data.getFixedHeaderWidth()) * mag,
+      top: (this.data.getFixedHeaderHeight()) * mag,
     };
+    return res;
   }
 }

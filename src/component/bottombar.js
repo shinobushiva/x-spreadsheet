@@ -73,10 +73,12 @@ export default class Bottombar {
   constructor(addFunc = () => {},
     swapFunc = () => {},
     deleteFunc = () => {},
-    updateFunc = () => {}) {
+    updateFunc = () => {},
+    isHide = false) {
     this.swapFunc = swapFunc;
     this.updateFunc = updateFunc;
     this.dataNames = [];
+    this.isHide = isHide;
     this.activeEl = null;
     this.deleteEl = null;
     this.items = [];

@@ -57,7 +57,6 @@ function keydownEventHandler(evt) {
 
 function inputEventHandler(evt) {
   const v = evt.target.value;
-  // console.log(evt, 'v:', v);
   const { suggest, textlineEl, validator } = this;
   const { cell } = this;
   if (cell !== null) {
@@ -184,6 +183,7 @@ export default class Editor {
       )
       .on('mousemove.stop', () => {})
       .on('mousedown.stop', () => {});
+    this.areaEl.el.style.backgroundColor = 'white';
     this.el = h('div', `${cssPrefix}-editor`)
       .child(this.areaEl).hide();
     this.suggest.bindInputEvents(this.textEl);

@@ -4,7 +4,7 @@ function dpr() {
 }
 
 function thinLineWidth() {
-  return dpr() - 0.5;
+  return dpr() / 2 - 0.5;
 }
 
 function npx(px) {
@@ -34,10 +34,10 @@ class DrawBox {
   setBorders({
     top, bottom, left, right,
   }) {
-    if (top) this.borderTop = top;
-    if (right) this.borderRight = right;
-    if (bottom) this.borderBottom = bottom;
-    if (left) this.borderLeft = left;
+    if (top && top.length > 0) this.borderTop = top;
+    if (right && right.length > 0) this.borderRight = right;
+    if (bottom && bottom.length > 0) this.borderBottom = bottom;
+    if (left && left.length > 0) this.borderLeft = left;
   }
 
   innerWidth() {
@@ -135,7 +135,9 @@ class Draw {
     this.el = el;
     this.ctx = el.getContext('2d');
     this.resize(width, height);
+    // XXX: Maybe it is doing nothing
     this.ctx.scale(dpr(), dpr());
+    this.dpr = dpr;
   }
 
   resize(width, height) {
@@ -216,8 +218,6 @@ class Draw {
       align, valign, font, color, strike, underline,
     } = attr;
     const tx = box.textx(align);
-    ctx.save();
-    ctx.beginPath();
     this.attr({
       textAlign: align,
       textBaseline: valign,
@@ -260,13 +260,12 @@ class Draw {
       }
       ty += font.size + 2;
     });
-    ctx.restore();
     return this;
   }
 
   border(style, color) {
     const { ctx } = this;
-    ctx.lineWidth = thinLineWidth;
+    ctx.lineWidth = thinLineWidth();
     ctx.strokeStyle = color;
     // console.log('style:', style);
     if (style === 'medium') {
@@ -299,78 +298,110 @@ class Draw {
 
   strokeBorders(box) {
     const { ctx } = this;
-    ctx.save();
-    ctx.beginPath();
     // border
     const {
       borderTop, borderRight, borderBottom, borderLeft,
     } = box;
     if (borderTop) {
+      ctx.beginPath();
       this.border(...borderTop);
-      // console.log('box.topxys:', box.topxys());
       this.line(...box.topxys());
+      ctx.closePath();
     }
     if (borderRight) {
+      ctx.beginPath();
       this.border(...borderRight);
       this.line(...box.rightxys());
+      ctx.closePath();
     }
     if (borderBottom) {
+      ctx.beginPath();
       this.border(...borderBottom);
       this.line(...box.bottomxys());
+      ctx.closePath();
     }
     if (borderLeft) {
+      ctx.beginPath();
       this.border(...borderLeft);
       this.line(...box.leftxys());
+      ctx.closePath();
     }
-    ctx.restore();
   }
 
-  dropdown(box) {
-    const { ctx } = this;
-    const {
-      x, y, width, height,
-    } = box;
-    const sx = x + width - 15;
-    const sy = y + height - 15;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(npx(sx), npx(sy));
-    ctx.lineTo(npx(sx + 8), npx(sy));
-    ctx.lineTo(npx(sx + 4), npx(sy + 6));
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 0, 0, .45)';
-    ctx.fill();
-    ctx.restore();
-  }
-
-  error(box) {
+  cornerTriangle(box, color = 'rgba(0, 0, 0, .5)', size = 8) {
     const { ctx } = this;
     const { x, y, width } = box;
     const sx = x + width - 1;
-    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(npx(sx - 8), npx(y - 1));
+    ctx.moveTo(npx(sx - size), npx(y - 1));
     ctx.lineTo(npx(sx), npx(y - 1));
-    ctx.lineTo(npx(sx), npx(y + 8));
+    ctx.lineTo(npx(sx), npx(y + size));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(255, 0, 0, .65)';
+    ctx.fillStyle = color;
     ctx.fill();
-    ctx.restore();
+  }
+
+  dropdown(box) {
+    this.cornerTriangle(box, 'rgba(0, 0, 0, .45)');
+  }
+
+  error(box) {
+    this.cornerTriangle(box, 'rgba(255, 0, 0, .65)');
   }
 
   frozen(box) {
     const { ctx } = this;
-    const { x, y, width } = box;
-    const sx = x + width - 1;
-    ctx.save();
+    const color = 'rgba(0, 0, 0, .45)';
+    const {
+      x, y,
+    } = box;
+    const size = 3;
+    const sx = x + 6;
+    const sy = y + 2;
     ctx.beginPath();
-    ctx.moveTo(npx(sx - 8), npx(y - 1));
-    ctx.lineTo(npx(sx), npx(y - 1));
-    ctx.lineTo(npx(sx), npx(y + 8));
+    ctx.moveTo(npx(sx), npx(sy));
+    ctx.lineTo(npx(sx), npx(sy + size));
+    ctx.lineTo(npx(sx - size), npx(sy + size));
+    ctx.lineTo(npx(sx - size), npx(sy));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 255, 0, .85)';
+    ctx.fillStyle = color;
     ctx.fill();
-    ctx.restore();
+  }
+
+  varialbe(box) {
+    // const color = 'rgba(255,192,203,1)';
+    const color = 'rgba(0, 0, 0, .45)';
+    const { ctx } = this;
+    const { x, y, width, height } = box;
+    // const size = 12;
+    const sx = x + width - 1;
+    const sy = y + height - 1;
+    ctx.beginPath();
+    ctx.moveTo(npx(x + 5), npx(sy - 2));
+    ctx.lineTo(npx(sx - 4), npx(sy - 2));
+    ctx.closePath();
+    ctx.lineWidth = 0.25;
+    // ctx.setLineDash([npx(4), npx(2)]);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  list(box) {
+    const { ctx } = this;
+    const color = 'rgba(0, 0, 0, .45)';
+    const {
+      x, y, width, height,
+    } = box;
+    const size = Math.min(height / 2, 8);
+    const sx = x + width - 4;
+    const sy = y + (height - size) / 2;
+    ctx.beginPath();
+    ctx.moveTo(npx(sx - size), npx(sy));
+    ctx.lineTo(npx(sx), npx(sy));
+    ctx.lineTo(npx(sx - size / 2), npx(sy + size));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
   }
 
   rect(box, dtextcb) {
@@ -385,6 +416,155 @@ class Draw {
     ctx.clip();
     ctx.fill();
     dtextcb();
+    ctx.closePath();
+    ctx.restore();
+  }
+
+  image(_image, fw, fh, tx, ty) {
+    const { ctx } = this;
+    const {
+      x, y, rotate, scale, image,
+    } = _image;
+    ctx.save();
+    this.translate(fw, fh).translate(tx, ty);
+    try {
+      if (image) {
+        ctx.scale(dpr() * scale, dpr() * scale);
+        ctx.translate(x / scale, y / scale);
+        // canvasを回転する
+        const TO_RADIANS = Math.PI / 180;
+        ctx.rotate(rotate * TO_RADIANS);
+        ctx.drawImage(
+          image,
+          -image.naturalWidth / 2,
+          -image.naturalHeight / 2,
+        );
+        ctx.restore();
+      }
+    } catch (error) {
+      console.log(error);
+      console.log(image, _image);
+    }
+    ctx.restore();
+  }
+
+  imageHandler(imageSelector, fw, fh, tx, ty) {
+    if (!imageSelector.selectedImage) {
+      return;
+    }
+    const { ctx } = this;
+    ctx.save();
+    this.translate(fw, fh).translate(tx, ty);
+    const { x, y, rotate, scale, image } = imageSelector.selectedImage.image;
+    if (!image) {
+      return;
+    }
+    const { naturalWidth, naturalHeight } = image;
+
+    ctx.scale(dpr(), dpr());
+
+    const dhx = naturalHeight / 2 * Math.cos(rotate * Math.PI / 180) * scale;
+    const dhy = naturalHeight / 2 * Math.sin(rotate * Math.PI / 180) * scale;
+    const dwx = naturalWidth / 2 * Math.cos(rotate * Math.PI / 180) * scale;
+    const dwy = naturalWidth / 2 * Math.sin(rotate * Math.PI / 180) * scale;
+    const lt = {
+      x: x + dhy - dwx,
+      y: y - dhx - dwy,
+    };
+    const rt = {
+      x: x + dhy + dwx,
+      y: y - dhx + dwy,
+    };
+    const rb = {
+      x: x - dhy + dwx,
+      y: y + dhx + dwy,
+    };
+    const lb = {
+      x: x - dhy - dwx,
+      y: y + dhx - dwy,
+    };
+
+    const radius = 4 * dpr();
+    const strokeColor = 'rgba(255, 0, 0, .65)';
+
+    if (imageSelector.debug) {
+      // ｘ’＝ｘcosθ-ysinθ
+      // ｙ’＝ｘsinθ+ycosθ
+      const { tx, ty } = imageSelector.transformPoint(
+        imageSelector.lastMousePosition.x,
+        imageSelector.lastMousePosition.y,
+        imageSelector.selectedImage.image,
+      );
+
+      ctx.beginPath();
+      ctx.arc(imageSelector.lastMousePosition.x, imageSelector.lastMousePosition.y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(0, 255, 0, .65)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(tx, ty, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(0, 0, 255, .65)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + naturalWidth, y);
+      ctx.lineTo(x + naturalWidth, y + naturalHeight);
+      ctx.lineTo(x, y + naturalHeight);
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(0, 255, 0, .65)';
+      ctx.stroke();
+    }
+
+    // center
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // rotate handle
+    ctx.beginPath();
+    ctx.arc(x + dhy * 1.2, y - dhx * 1.2, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + dhy * 1.2, y - dhx * 1.2);
+    ctx.stroke();
+
+    // lefttop
+    ctx.beginPath();
+    ctx.arc(lt.x, lt.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // righttop
+    ctx.beginPath();
+    ctx.arc(rt.x, rt.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // rightbottom
+    ctx.beginPath();
+    ctx.arc(lb.x, lb.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // leftbottom
+    ctx.beginPath();
+    ctx.arc(rb.x, rb.y, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+
+    // border
+    ctx.beginPath();
+    ctx.moveTo(lt.x, lt.y);
+    ctx.lineTo(rt.x, rt.y);
+    ctx.lineTo(rb.x, rb.y);
+    ctx.lineTo(lb.x, lb.y);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255, 0, 0, .65)';
+    ctx.stroke();
     ctx.restore();
   }
 }

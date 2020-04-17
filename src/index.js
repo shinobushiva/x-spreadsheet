@@ -34,7 +34,9 @@ class Spreadsheet {
     // create canvas element
     targetEl.appendChild(rootEl.el);
     this.sheet = new Sheet(rootEl, this.data);
-    rootEl.child(this.bottombar.el);
+    if (options.showBottombar) {
+      rootEl.child(this.bottombar.el);
+    }
   }
 
   addSheet(name) {
