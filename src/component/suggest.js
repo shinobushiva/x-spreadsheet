@@ -71,7 +71,14 @@ export default class Suggest {
   constructor(items, itemClick, width = '200px') {
     this.filterItems = [];
     this.items = items;
-    this.el = h('div', `${cssPrefix}-suggest`).css('width', width).hide();
+    this.el = h('div', `${cssPrefix}-suggest`)
+      .css('width', width)
+      .css('max-height', '300px')
+      .css('overflow', 'scroll')
+      .on('mousewheel.stop', (evt) => {
+        evt.stopPropagation();
+      })
+      .hide();
     this.itemClick = itemClick;
     this.itemIndex = -1;
   }
