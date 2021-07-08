@@ -73,7 +73,7 @@ export default class Suggest {
     this.items = items;
     this.el = h('div', `${cssPrefix}-suggest`)
       .css('width', width)
-      .css('max-hegight', '300px')
+      .css('max-height', '300px')
       .css('overflow', 'scroll')
       .on('mousewheel.stop', (evt) => {
         evt.stopPropagation();
